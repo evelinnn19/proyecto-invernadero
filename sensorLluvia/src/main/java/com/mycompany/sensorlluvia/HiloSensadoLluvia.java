@@ -1,9 +1,6 @@
 package com.mycompany.sensorlluvia;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Random;
 import java.util.logging.Level;
@@ -14,9 +11,9 @@ public class HiloSensadoLluvia extends Thread {
     private Boolean prendido;
     private boolean llueve;
     private Socket clienteLluviaEnviar;
-    private DataOutputStream haciaServer;
+    private PrintWriter haciaServer;
 
-    public HiloSensadoLluvia(Socket clienteLluviaEnviar, DataOutputStream haciaServer) {
+    public HiloSensadoLluvia(Socket clienteLluviaEnviar, PrintWriter haciaServer) {
         prendido = Boolean.TRUE;
         this.clienteLluviaEnviar = clienteLluviaEnviar;
         this.haciaServer = haciaServer;
@@ -25,7 +22,6 @@ public class HiloSensadoLluvia extends Thread {
     public void generarLluviaAleatoria() {
         Random random = new Random();
         llueve = random.nextBoolean();
-
     }
 
     public void apagar() {
@@ -42,14 +38,14 @@ public class HiloSensadoLluvia extends Thread {
         try {
             while (prendido) {
                 generarLluviaAleatoria();
-                haciaServer.writeBoolean(llueve);
+                haciaServer.println(llueve);
                 System.out.println("Llueve?: " + llueve);
                 haciaServer.flush();
                 
                 Thread.sleep(5000);
             }
 
-        } catch (InterruptedException | IOException ex) {
+        } catch (InterruptedException ex) {
             Logger.getLogger(HiloSensadoLluvia.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

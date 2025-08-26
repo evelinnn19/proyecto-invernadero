@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,10 +15,10 @@ public class HiloSensadoTemperatura extends Thread {
     private Boolean prendido;
     private Double temperatura;
     private Socket clienteTemperaturaEnviar;
-    private DataOutputStream haciaServer;
+    private PrintWriter haciaServer;
 
-    public HiloSensadoTemperatura(Socket clienteTemperaturaEnviar, DataOutputStream haciaServer) {
-        prendido = Boolean.TRUE;
+    public HiloSensadoTemperatura(Socket clienteTemperaturaEnviar, PrintWriter haciaServer) {
+        this.prendido = Boolean.TRUE;
         this.clienteTemperaturaEnviar = clienteTemperaturaEnviar;
         this.haciaServer = haciaServer;
     }
@@ -43,14 +44,13 @@ public class HiloSensadoTemperatura extends Thread {
 
             while (prendido) {
                 generarTempAleatoria();
-                haciaServer.writeDouble(temperatura);
-                System.out.println("La temperatura es: " + temperatura);
                 haciaServer.flush();
-                
+                haciaServer.println(temperatura);
+                System.out.println("La temperatura es: " + temperatura);
                 Thread.sleep(5000);
             }
 
-        } catch (InterruptedException | IOException ex) {
+        } catch (InterruptedException ex) {
             Logger.getLogger(HiloSensadoTemperatura.class.getName()).log(Level.SEVERE, null, ex);
         }
 

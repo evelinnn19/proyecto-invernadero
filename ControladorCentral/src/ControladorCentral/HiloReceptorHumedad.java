@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ControladorCentral;
 
 import java.io.BufferedReader;
@@ -12,41 +8,21 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Alumnos
- */
-public class HiloReceptorHumedad extends Thread{
-    Socket ClienteHumedad;
+public class HiloReceptorHumedad extends Thread {
+
+    Socket clienteHumedad;
     BufferedReader br;
+    PrintWriter out;
     double humedad;
-    
-    public HiloReceptorHumedad(Socket ch){
-        ClienteHumedad = ch;
+
+    public HiloReceptorHumedad(Socket ch) {
+        clienteHumedad = ch;
         try {
-             BufferedReader in = new BufferedReader(new InputStreamReader(ClienteHumedad.getInputStream()));
-             PrintWriter out = new PrintWriter(ClienteHumedad.getOutputStream(), true);
-        } catch (Exception e) {
+            this.br = new BufferedReader(new InputStreamReader(clienteHumedad.getInputStream()));
+            this.out = new PrintWriter(clienteHumedad.getOutputStream(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    }
-    
-    public void recibirHumedad(){
-        
-    }
-    
-    @Override
-    public void run(){
-        while (true) {            
-            try {
-                String Entrada = br.readLine();
-                setHumedad(Double.parseDouble(Entrada));
-                
-                
-            } catch (IOException ex) {
-                Logger.getLogger(HiloReceptorHumedad.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        
     }
 
     public double getHumedad() {
@@ -56,5 +32,18 @@ public class HiloReceptorHumedad extends Thread{
     public void setHumedad(double humedad) {
         this.humedad = humedad;
     }
-    
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                String Entrada = br.readLine();
+                setHumedad(Double.parseDouble(Entrada));
+                System.out.println("El servidor recibió la humedad: " + getHumedad());
+
+            } catch (IOException ex) {
+                Logger.getLogger(HiloReceptorHumedad.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 }

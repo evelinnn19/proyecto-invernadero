@@ -1,7 +1,6 @@
 package sensorhumedad1;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,9 +10,9 @@ public class HiloSensadoHumedad extends Thread {
     private Boolean prendido;
     private Double humedad;
     private Socket clienteHumedadEnviar;
-    private DataOutputStream haciaServer;
+    private PrintWriter haciaServer;
 
-    public HiloSensadoHumedad(Socket che, DataOutputStream dos) {
+    public HiloSensadoHumedad(Socket che, PrintWriter dos) {
         prendido = Boolean.TRUE;
         this.clienteHumedadEnviar = che;
         this.haciaServer = dos;
@@ -32,22 +31,19 @@ public class HiloSensadoHumedad extends Thread {
     }
 
     public void run() {
-        
-        
         //usar prendido como condicion podría ayudar a controlar cuando queremos sensar la humedad.
         try {
             while (prendido) {
                 generarHumedadAleatoria();
-                haciaServer.writeDouble(humedad);
-                System.out.println("La humedad es: " + humedad);
                 haciaServer.flush();
-                
+                haciaServer.println(humedad);
+                System.out.println("La humedad desde el dispositivo es: " + humedad);
+                                
                 Thread.sleep(5000);
             }
 
-        } catch (InterruptedException | IOException ex) {
+        } catch (InterruptedException ex) {
             Logger.getLogger(HiloSensadoHumedad.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 }

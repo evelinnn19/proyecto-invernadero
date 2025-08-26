@@ -2,6 +2,7 @@ package com.mycompany.sensorradiacion;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -15,15 +16,15 @@ public class SensorRadiacion {
 
         try {
             System.out.println("Inicio de la conexión.");
-            Socket socket = new Socket(InetAddress.getByName("localhost"), 20000);
-            System.out.println("Socket creado.    " + socket);
+            Socket cliente = new Socket(InetAddress.getByName("localhost"), 20000);
+            System.out.println("Socket creado.    " + cliente);
             
-            DataOutputStream outToServer = new DataOutputStream(socket.getOutputStream());
-            
-            outToServer.writeChars("sensorRadiacion");
+            PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
+
+            outToServer.println("sensorRadiacion");
             outToServer.flush();
             
-            HiloSensadoRadia sensorRad = new HiloSensadoRadia(socket, outToServer);
+            HiloSensadoRadia sensorRad = new HiloSensadoRadia(cliente, outToServer);
             sensorRad.start();
             
         } catch (UnknownHostException ex) {

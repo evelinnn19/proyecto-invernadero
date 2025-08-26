@@ -1,7 +1,7 @@
 package com.mycompany.sensortemperatura;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.logging.Level;
@@ -13,11 +13,11 @@ public class SensorTemperatura {
         try{
             System.out.println("Inicio de la conexión.");
             Socket cliente = new Socket(InetAddress.getByName("localhost"), 20000);
-            System.out.println("Cliente conectado.    " + cliente);
+            System.out.println("Cliente de temperatura conectado.    " + cliente);
             
-            DataOutputStream outToServer = new DataOutputStream(cliente.getOutputStream());
+            PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
 
-            outToServer.writeChars("sensorTemperatura");
+            outToServer.println("sensorTemperatura");
             outToServer.flush();
             
             HiloSensadoTemperatura sensorHumedad = new HiloSensadoTemperatura(cliente, outToServer);

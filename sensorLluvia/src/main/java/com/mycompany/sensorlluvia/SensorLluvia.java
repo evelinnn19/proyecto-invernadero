@@ -2,6 +2,7 @@ package com.mycompany.sensorlluvia;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.logging.Level;
@@ -13,11 +14,11 @@ public class SensorLluvia {
         try{
             System.out.println("Inicio de la conexión.");
             Socket cliente = new Socket(InetAddress.getByName("localhost"), 20000);
-            System.out.println("Cliente conectado.    " + cliente);
+            System.out.println("Sensor conectado.    " + cliente);
             
-            DataOutputStream outToServer = new DataOutputStream(cliente.getOutputStream());
+            PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
 
-            outToServer.writeBytes("sensorHumedad");
+            outToServer.println("sensorLluvia");
             outToServer.flush();
             
             HiloSensadoLluvia sensorHumedad = new HiloSensadoLluvia(cliente, outToServer);
