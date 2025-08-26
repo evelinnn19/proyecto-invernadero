@@ -13,11 +13,15 @@ public class HiloSensadoTemperatura extends Thread {
 
     private Boolean prendido;
     private Double temperatura;
+    private Socket clienteTemperaturaEnviar;
+    private DataOutputStream haciaServer;
 
-    public void HiloSensado() {
-        prendido = false;
+    public HiloSensadoTemperatura(Socket clienteTemperaturaEnviar, DataOutputStream haciaServer) {
+        prendido = Boolean.TRUE;
+        this.clienteTemperaturaEnviar = clienteTemperaturaEnviar;
+        this.haciaServer = haciaServer;
     }
-
+    
     public void generarTempAleatoria() {
         Random random = new Random();
         temperatura = random.nextDouble(-3, 40);
@@ -38,22 +42,12 @@ public class HiloSensadoTemperatura extends Thread {
         try {
 
             while (prendido) {
-                //Crea el socket.
-                Socket socketCliente = new Socket("localhost", 5678);
-                //Crea los input y output referidos al socket.
-                DataOutputStream outToServer = new DataOutputStream(socketCliente.getOutputStream());
-                BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socketCliente.getInputStream()));
-
                 generarTempAleatoria();
-                
-                outToServer.writeDouble(temperatura);
+                haciaServer.writeDouble(temperatura);
                 System.out.println("La temperatura es: " + temperatura);
+                haciaServer.flush();
                 
-                outToServer.flush();
-                
-                socketCliente.close();
                 Thread.sleep(5000);
-
             }
 
         } catch (InterruptedException | IOException ex) {

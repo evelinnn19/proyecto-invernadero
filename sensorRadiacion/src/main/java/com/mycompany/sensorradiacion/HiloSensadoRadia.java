@@ -13,6 +13,14 @@ public class HiloSensadoRadia extends Thread {
 
     private Boolean prendido;
     private Double radiacion;
+    private Socket socketClienteRadiacion;
+    private DataOutputStream haciaServer;
+
+    public HiloSensadoRadia(Socket socketClienteRadiacion, DataOutputStream haciaServer) {
+        prendido = Boolean.TRUE;
+        this.socketClienteRadiacion = socketClienteRadiacion;
+        this.haciaServer = haciaServer;
+    }
 
     public void HiloSensado() {
         prendido = false;
@@ -39,22 +47,12 @@ public class HiloSensadoRadia extends Thread {
         try {
 
             while (prendido) {
-                //Crea el socket.
-                Socket socketCliente = new Socket("localhost", 5678);
-                //Crea los input y output referidos al socket.
-                DataOutputStream outToServer = new DataOutputStream(socketCliente.getOutputStream());
-                BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socketCliente.getInputStream()));
-
                 generarRadiacionAleatoria();
-                
-                outToServer.writeDouble(radiacion);
+                haciaServer.writeDouble(radiacion);
                 System.out.println("La radiacion es: " + radiacion);
+                haciaServer.flush();
                 
-                outToServer.flush();
-                
-                socketCliente.close();
                 Thread.sleep(5000);
-
             }
 
         } catch (InterruptedException | IOException ex) {

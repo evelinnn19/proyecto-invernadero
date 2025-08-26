@@ -13,9 +13,13 @@ public class HiloSensadoLluvia extends Thread {
 
     private Boolean prendido;
     private boolean llueve;
+    private Socket clienteLluviaEnviar;
+    private DataOutputStream haciaServer;
 
-    public void HiloSensado() {
-        prendido = false;
+    public HiloSensadoLluvia(Socket clienteLluviaEnviar, DataOutputStream haciaServer) {
+        prendido = Boolean.TRUE;
+        this.clienteLluviaEnviar = clienteLluviaEnviar;
+        this.haciaServer = haciaServer;
     }
 
     public void generarLluviaAleatoria() {
@@ -35,31 +39,18 @@ public class HiloSensadoLluvia extends Thread {
     public void run() {
         prendido = Boolean.TRUE;
         //usar prendido como condicion podría ayudar a controlar cuando queremos sensar la humedad.
-
         try {
-
             while (prendido) {
-                //Crea el socket.
-                Socket socketCliente = new Socket("localhost", 5678);
-                //Crea los input y output referidos al socket.
-                DataOutputStream outToServer = new DataOutputStream(socketCliente.getOutputStream());
-                BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socketCliente.getInputStream()));
-
                 generarLluviaAleatoria();
-                
-                outToServer.writeBoolean(llueve);
+                haciaServer.writeBoolean(llueve);
                 System.out.println("Llueve?: " + llueve);
+                haciaServer.flush();
                 
-                outToServer.flush();
-                
-                socketCliente.close();
                 Thread.sleep(5000);
-
             }
 
         } catch (InterruptedException | IOException ex) {
             Logger.getLogger(HiloSensadoLluvia.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 }

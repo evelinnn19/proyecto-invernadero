@@ -1,11 +1,7 @@
 package sensorhumedad1;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.DataInputStream;
-import java.net.DatagramPacket;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,14 +10,17 @@ public class HiloSensadoHumedad extends Thread {
 
     private Boolean prendido;
     private Double humedad;
+    private Socket clienteHumedadEnviar;
+    private DataOutputStream haciaServer;
 
-    public void HiloSensado() {
-        prendido = false;
+    public HiloSensadoHumedad(Socket che, DataOutputStream dos) {
+        prendido = Boolean.TRUE;
+        this.clienteHumedadEnviar = che;
+        this.haciaServer = dos;
     }
 
     public void generarHumedadAleatoria() {
         humedad = Math.random() * 100;
-
     }
 
     public void apagar() {
@@ -33,32 +32,17 @@ public class HiloSensadoHumedad extends Thread {
     }
 
     public void run() {
-        prendido = Boolean.TRUE;
+        
+        
         //usar prendido como condicion podría ayudar a controlar cuando queremos sensar la humedad.
-
         try {
-
             while (prendido) {
-                //Crea el socket.
-                Socket socketCliente = new Socket("localhost", 5678);
-                //Crea los input y output referidos al socket.
-                DataOutputStream outToServer = new DataOutputStream(socketCliente.getOutputStream());
-                BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socketCliente.getInputStream()));
-                
-                //Crear el paquete relevante al socket.
-                
-                
-                
                 generarHumedadAleatoria();
-                
-                outToServer.writeDouble(humedad);
+                haciaServer.writeDouble(humedad);
                 System.out.println("La humedad es: " + humedad);
+                haciaServer.flush();
                 
-                outToServer.flush();
-                
-                socketCliente.close();
                 Thread.sleep(5000);
-
             }
 
         } catch (InterruptedException | IOException ex) {
