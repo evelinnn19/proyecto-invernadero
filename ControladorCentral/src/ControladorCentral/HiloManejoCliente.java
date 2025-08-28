@@ -42,24 +42,45 @@ public class HiloManejoCliente extends Thread {
             //System.out.println(tipoDispositivo);
 
             switch (tipoDispositivo) {
-                case "sensorHumedad":
+                case "sensorHumedad1":
                     System.out.println("Se detectó una conexion para el sensor de humedad.");
-                    HiloReceptorHumedad hrh = new HiloReceptorHumedad(cliente);
-                    hrh.start();
+                    HiloReceptorHumedad hrh1 = new HiloReceptorHumedad(cliente,datos,1);
+                    hrh1.start();
                     break;
+                case "sensorHumedad2":
+                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    HiloReceptorHumedad hrh2 = new HiloReceptorHumedad(cliente,datos,2);
+                    hrh2.start();
+                    break;
+                case "sensorHumedad3":
+                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    HiloReceptorHumedad hrh3 = new HiloReceptorHumedad(cliente,datos,3);
+                    hrh3.start();
+                    break;
+                case "sensorHumedad4":
+                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    HiloReceptorHumedad hrh4 = new HiloReceptorHumedad(cliente,datos,4);
+                    hrh4.start();
+                    break;
+                case "sensorHumedad5":
+                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    HiloReceptorHumedad hrh5 = new HiloReceptorHumedad(cliente,datos,6);
+                    hrh5.start();
+                    break;
+                    
                 case "sensorTemperatura":
                     System.out.println("Se detectó una conexion para el sensor de temperatura.");
-                    HiloReceptorTemperatura hrt = new HiloReceptorTemperatura(cliente);
+                    HiloReceptorTemperatura hrt = new HiloReceptorTemperatura(cliente,datos);
                     hrt.start();
                     break;
                 case "sensorRadiacion":
                     System.out.println("Se detectó una conexion para el sensor de temperatura.");
-                    HiloReceptorRadiacion hrr = new HiloReceptorRadiacion(cliente);
+                    HiloReceptorRadiacion hrr = new HiloReceptorRadiacion(cliente,datos);
                     hrr.start();
                     break;
                 case "sensorLluvia":
                     System.out.println("Se detectó una conexion para el sensor de lluvia.");
-                    HiloReceptorLluvia hrll = new HiloReceptorLluvia(cliente);
+                    HiloReceptorLluvia hrll = new HiloReceptorLluvia(cliente,datos);
                     hrll.start();
                     break;
                 default:

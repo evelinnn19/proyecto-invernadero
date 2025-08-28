@@ -14,8 +14,10 @@ public class HiloReceptorRadiacion extends Thread {
     BufferedReader br;
     PrintWriter out;
     double radiacion;
+    DatosINR datos;
 
-    public HiloReceptorRadiacion(Socket ch) {
+    public HiloReceptorRadiacion(Socket ch,DatosINR datos) {
+        this.datos = datos;
         clienteRadiacion = ch;
         try {
             this.br = new BufferedReader(new InputStreamReader(clienteRadiacion.getInputStream()));
@@ -40,6 +42,7 @@ public class HiloReceptorRadiacion extends Thread {
                 String Entrada = br.readLine();
                 setRadiacion(Double.parseDouble(Entrada));
                 System.out.println("El servidor recibio la radiacion: " + getRadiacion());
+                this.datos.setSensorRad(radiacion);
 
             } catch (IOException ex) {
                 Logger.getLogger(HiloReceptorHumedad.class.getName()).log(Level.SEVERE, null, ex);

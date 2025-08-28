@@ -14,8 +14,10 @@ public class HiloReceptorLluvia extends Thread{
     BufferedReader br;
     PrintWriter out;
     boolean llueve;
+    DatosINR datos;
     
-    public HiloReceptorLluvia(Socket ch){
+    public HiloReceptorLluvia(Socket ch,DatosINR datos){
+        this.datos = datos;
         clienteLluvia = ch;
         try {
             this.br = new BufferedReader(new InputStreamReader(clienteLluvia.getInputStream()));
@@ -40,6 +42,7 @@ public class HiloReceptorLluvia extends Thread{
                 String Entrada = br.readLine();
                 setLlueve(Boolean.parseBoolean(Entrada));
                 System.out.println("El servidor recibio la siguiente informacion de lluvia: " + getLlueve());
+                this.datos.setSensorLluvia(llueve);
                 
             } catch (IOException ex) {
                 Logger.getLogger(HiloReceptorHumedad.class.getName()).log(Level.SEVERE, null, ex);

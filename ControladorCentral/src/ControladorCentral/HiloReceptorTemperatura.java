@@ -14,8 +14,10 @@ public class HiloReceptorTemperatura extends Thread {
     BufferedReader br;
     PrintWriter out;
     double temperatura;
+    DatosINR datos;
 
-    public HiloReceptorTemperatura(Socket ch) {
+    public HiloReceptorTemperatura(Socket ch,DatosINR datos) {
+        this.datos = datos;
         clienteTemperatura = ch;
         try {
             this.br = new BufferedReader(new InputStreamReader(clienteTemperatura.getInputStream()));
@@ -40,6 +42,7 @@ public class HiloReceptorTemperatura extends Thread {
                 String Entrada = br.readLine();
                 setTemperatura(Double.parseDouble(Entrada));
                 System.out.println("El servidor recibio la temperatura: " + getTemperatura() + "Celsius.");
+                this.datos.setSensorTemp(temperatura);
 
             } catch (IOException ex) {
                 Logger.getLogger(HiloReceptorHumedad.class.getName()).log(Level.SEVERE, null, ex);
