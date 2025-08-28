@@ -21,6 +21,10 @@ import java.util.logging.Logger;
 public class Main {
 
     public static void main(String[] args) {
+        
+        //objeto unico DatosINR
+        
+        DatosINR datos = new DatosINR();
         try {
             System.out.println("Inicio del Invernadero.");
             ServerSocket server = new ServerSocket(20000);
@@ -30,7 +34,7 @@ public class Main {
             while (true) {
                 System.out.println("Esperando a una conexion.");
                 Socket s = server.accept();
-                HiloManejoCliente cliente = new HiloManejoCliente(s);
+                HiloManejoCliente cliente = new HiloManejoCliente(s,datos);
                 System.out.println("Se detecto una conexión.   " + s);
                 
                 cliente.start();

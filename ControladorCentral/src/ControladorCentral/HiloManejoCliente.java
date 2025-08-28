@@ -21,9 +21,11 @@ public class HiloManejoCliente extends Thread {
     Socket cliente;
     BufferedReader in;
     PrintWriter out;
+    DatosINR datos;
 
-    public HiloManejoCliente(Socket ch) {
+    public HiloManejoCliente(Socket ch,DatosINR datos) {
         cliente = ch;
+        this.datos = datos;
         try {
             in = new BufferedReader(new InputStreamReader(ch.getInputStream()));
             out = new PrintWriter(cliente.getOutputStream(), true);
