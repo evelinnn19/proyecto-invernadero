@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ControladorCentral;
 
 public class DatosINR {
@@ -14,10 +10,23 @@ public class DatosINR {
     private double sensorRad;
     private boolean sensorLluvia;
 
-    // --- MÉTODOS DE CÁLCULO ---
+    
+    /*
+    La clase "DatosINR" ayudará a manejar el calulo del Indice de Necesidad de Riego.
+    Almacena datos relacionados con los sensores, y puede calcular los indices.
+    */
+    
+    /**Calcula el Indice de Necesidad de Riego. Para ello, se pasa un sensor
+     *
+     * @param sensor
+     * @param w1
+     * @param w2
+     * @param w3
+     * @return
+     */
     private double calcularINR(double h, double w1, double w2, double w3) {
         if (sensorLluvia) {
-            System.out.println("☔ Lluvia detectada, riego inhibido.");
+            System.out.println("Lluvia detectada, riego inhibido.");
             return 0;
         }
         return w1 * (1 - h / 100.0)
@@ -25,6 +34,7 @@ public class DatosINR {
              + w3 * (sensorRad / 1000.0);
     }
 
+    
     public double calcularINR(int sensor, double w1, double w2, double w3) {
         switch (sensor) {
             case 1: return calcularINR(sensorH1, w1, w2, w3);

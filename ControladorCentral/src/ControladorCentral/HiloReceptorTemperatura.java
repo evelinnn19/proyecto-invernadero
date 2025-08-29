@@ -10,11 +10,11 @@ import java.util.logging.Logger;
 
 public class HiloReceptorTemperatura extends Thread {
 
-    Socket clienteTemperatura;
-    BufferedReader br;
-    PrintWriter out;
-    double temperatura;
-    DatosINR datos;
+    private Socket clienteTemperatura;
+    private BufferedReader br;
+    private PrintWriter out;
+    private double temperatura;
+    private DatosINR datos;
 
     public HiloReceptorTemperatura(Socket ch,DatosINR datos) {
         this.datos = datos;

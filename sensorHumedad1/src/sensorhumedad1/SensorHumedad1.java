@@ -17,7 +17,7 @@ public class SensorHumedad1 {
             
             PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
 
-            outToServer.println("sensorHumedad");
+            outToServer.println("sensorHumedad1");
             outToServer.flush();
             
             HiloSensadoHumedad sensorHumedad = new HiloSensadoHumedad(cliente, outToServer);

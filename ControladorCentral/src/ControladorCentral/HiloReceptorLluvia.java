@@ -10,11 +10,11 @@ import java.util.logging.Logger;
 
 public class HiloReceptorLluvia extends Thread{
     
-    Socket clienteLluvia;
-    BufferedReader br;
-    PrintWriter out;
-    boolean llueve;
-    DatosINR datos;
+    private Socket clienteLluvia;
+    private BufferedReader br;
+    private PrintWriter out;
+    private boolean llueve;
+    private DatosINR datos;
     
     public HiloReceptorLluvia(Socket ch,DatosINR datos){
         this.datos = datos;

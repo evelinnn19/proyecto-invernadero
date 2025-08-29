@@ -13,15 +13,15 @@ import java.util.logging.Logger;
  * @author Alumnos
  *
  * La clase que manejará la aceptación de clientes en un hilo.
- *
+ * Simplemente se encarga de determinar la conexión para un sensor.
  *
  */
 public class HiloManejoCliente extends Thread {
 
-    Socket cliente;
-    BufferedReader in;
-    PrintWriter out;
-    DatosINR datos;
+    private Socket cliente;
+    private BufferedReader in;
+    private PrintWriter out;
+    private DatosINR datos;
 
     public HiloManejoCliente(Socket ch,DatosINR datos) {
         cliente = ch;
@@ -43,28 +43,28 @@ public class HiloManejoCliente extends Thread {
 
             switch (tipoDispositivo) {
                 case "sensorHumedad1":
-                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    System.out.println("Se detectó una conexion para el sensor de humedad numero 1.");
                     HiloReceptorHumedad hrh1 = new HiloReceptorHumedad(cliente,datos,1);
                     hrh1.start();
                     break;
                 case "sensorHumedad2":
-                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    System.out.println("Se detectó una conexion para el sensor de humedad numero 2.");
                     HiloReceptorHumedad hrh2 = new HiloReceptorHumedad(cliente,datos,2);
                     hrh2.start();
                     break;
                 case "sensorHumedad3":
-                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    System.out.println("Se detectó una conexion para el sensor de humedad numero 3.");
                     HiloReceptorHumedad hrh3 = new HiloReceptorHumedad(cliente,datos,3);
                     hrh3.start();
                     break;
                 case "sensorHumedad4":
-                    System.out.println("Se detectó una conexion para el sensor de humedad.");
+                    System.out.println("Se detectó una conexion para el sensor de humedad numero 4.");
                     HiloReceptorHumedad hrh4 = new HiloReceptorHumedad(cliente,datos,4);
                     hrh4.start();
                     break;
                 case "sensorHumedad5":
-                    System.out.println("Se detectó una conexion para el sensor de humedad.");
-                    HiloReceptorHumedad hrh5 = new HiloReceptorHumedad(cliente,datos,6);
+                    System.out.println("Se detectó una conexion para el sensor de humedad numero 5.");
+                    HiloReceptorHumedad hrh5 = new HiloReceptorHumedad(cliente,datos,5);
                     hrh5.start();
                     break;
                     
@@ -74,7 +74,7 @@ public class HiloManejoCliente extends Thread {
                     hrt.start();
                     break;
                 case "sensorRadiacion":
-                    System.out.println("Se detectó una conexion para el sensor de temperatura.");
+                    System.out.println("Se detectó una conexion para el sensor de radiacion.");
                     HiloReceptorRadiacion hrr = new HiloReceptorRadiacion(cliente,datos);
                     hrr.start();
                     break;

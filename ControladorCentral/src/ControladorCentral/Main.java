@@ -17,6 +17,8 @@ import java.util.logging.Logger;
  *
  * Las clases "HiloReceptorX" se encargarán de escuchar constantemente la
  * información proveniente de los dispositivos (otros proyectos en ejecución).
+ * 
+ * 
  */
 public class Main {
 
@@ -35,7 +37,7 @@ public class Main {
                 System.out.println("Esperando a una conexion.");
                 Socket s = server.accept();
                 HiloManejoCliente cliente = new HiloManejoCliente(s,datos);
-                System.out.println("Se detecto una conexión.   " + s);
+                System.out.println("Se detecto una conexión. --->   " + s);
                 
                 cliente.start();
             }

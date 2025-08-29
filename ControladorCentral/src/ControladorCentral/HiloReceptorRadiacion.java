@@ -10,11 +10,11 @@ import java.util.logging.Logger;
 
 public class HiloReceptorRadiacion extends Thread {
 
-    Socket clienteRadiacion;
-    BufferedReader br;
-    PrintWriter out;
-    double radiacion;
-    DatosINR datos;
+    private Socket clienteRadiacion;
+    private BufferedReader br;
+    private PrintWriter out;
+    private double radiacion;
+    private DatosINR datos;
 
     public HiloReceptorRadiacion(Socket ch,DatosINR datos) {
         this.datos = datos;
