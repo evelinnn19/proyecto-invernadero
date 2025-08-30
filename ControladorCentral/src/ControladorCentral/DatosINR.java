@@ -45,7 +45,7 @@ public class DatosINR {
             default: throw new IllegalArgumentException("Número de parcela inválido: " + sensor);
         }
     }
-
+    
     public double getSensorH1() {
         return sensorH1;
     }

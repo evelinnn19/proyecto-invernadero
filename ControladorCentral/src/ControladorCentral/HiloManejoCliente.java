@@ -83,6 +83,11 @@ public class HiloManejoCliente extends Thread {
                     HiloReceptorLluvia hrll = new HiloReceptorLluvia(cliente,datos);
                     hrll.start();
                     break;
+                case "electroValvula":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    HiloReceptorElectrovalvula hre1 = new HiloReceptorElectrovalvula(cliente,datos,1);
+                    hre1.start();
+                    break;
                 default:
                     System.out.println("SE DETECTO UNA CONEXION NO ORIGINARIA DE LOS SENSORES.");
                     break;
