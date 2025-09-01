@@ -22,10 +22,12 @@ public class HiloManejoCliente extends Thread {
     private BufferedReader in;
     private PrintWriter out;
     private DatosINR datos;
+    private CoordinadorBomba bomba;
 
-    public HiloManejoCliente(Socket ch,DatosINR datos) {
+    public HiloManejoCliente(Socket ch,DatosINR datos,CoordinadorBomba bomba) {
         cliente = ch;
         this.datos = datos;
+        this.bomba = bomba;
         try {
             in = new BufferedReader(new InputStreamReader(ch.getInputStream()));
             out = new PrintWriter(cliente.getOutputStream(), true);
@@ -83,10 +85,42 @@ public class HiloManejoCliente extends Thread {
                     HiloReceptorLluvia hrll = new HiloReceptorLluvia(cliente,datos);
                     hrll.start();
                     break;
-                case "electroValvula":
+                    //Este es para el sistema de fertirrigación
+                case "electroValvula1":
                     System.out.println("Se detectó una conexion para una electro valvula");
-                    HiloReceptorElectrovalvula hre1 = new HiloReceptorElectrovalvula(cliente,datos,1);
+                    HiloReceptorElectrovalvula hre1 = new HiloReceptorElectrovalvula(cliente,datos,0,bomba,true);
                     hre1.start();
+                    break;
+                    //Este es la Valvula de riego
+                case "electroValvula2":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    bomba.setElectrovalvulaGeneral(cliente);
+                    break;
+                    //Apartir de aqui es para las parcelas 1 a 5
+                case "electroValvula3":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    HiloReceptorElectrovalvula hre3 = new HiloReceptorElectrovalvula(cliente,datos,1,bomba,false);
+                    hre3.start();
+                    break;
+                case "electroValvula4":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    HiloReceptorElectrovalvula hre4 = new HiloReceptorElectrovalvula(cliente,datos,2,bomba,false);
+                    hre4.start();
+                    break;
+                case "electroValvula5":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    HiloReceptorElectrovalvula hre5 = new HiloReceptorElectrovalvula(cliente,datos,3,bomba,false);
+                    hre5.start();
+                    break;
+                case "electroValvula6":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    HiloReceptorElectrovalvula hre6 = new HiloReceptorElectrovalvula(cliente,datos,4,bomba,false);
+                    hre6.start();
+                    break;
+                case "electroValvula7":
+                    System.out.println("Se detectó una conexion para una electro valvula");
+                    HiloReceptorElectrovalvula hre7 = new HiloReceptorElectrovalvula(cliente,datos,5,bomba,false);
+                    hre7.start();
                     break;
                 default:
                     System.out.println("SE DETECTO UNA CONEXION NO ORIGINARIA DE LOS SENSORES.");

@@ -17,17 +17,21 @@ import java.util.logging.Logger;
  * @author Alejandro
  */
 public class HiloReceptorElectrovalvula extends Thread{
-    Socket cliente;
-    BufferedReader br;
-    PrintWriter out;
-    double humedad;
-    int parcela;
-    DatosINR datos;
+    private Socket cliente;
+    private BufferedReader br;
+    private PrintWriter out;
+    private double humedad;
+    private int parcela;
+    private DatosINR datos;
+    private CoordinadorBomba bomba;
+    private boolean esFerti;
 
-    public HiloReceptorElectrovalvula(Socket ch,DatosINR datos,int parcela) {
+    public HiloReceptorElectrovalvula(Socket ch,DatosINR datos,int parcela,CoordinadorBomba bomba,boolean fer) {
         this.datos = datos;
         cliente = ch;
+        this.bomba = bomba;
        this.parcela = parcela;
+       this.esFerti = fer;
         try {
             this.br = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
             this.out = new PrintWriter(cliente.getOutputStream(), true);
@@ -69,12 +73,34 @@ public class HiloReceptorElectrovalvula extends Thread{
     @Override
     public void run(){
             while (true) {
-                int tiempo = tiempoRiegoParcela(this.parcela,0.5,0.1,0.5);
-                out.println(tiempo);
-                out.flush();
-                System.out.println("➡️ Enviado tiempo de riego: " + tiempo + " segundos a parcela " + this.parcela);
+
                 try {
+                    
+                
+                
+                if(this.esFerti){
+                    System.out.println("el sistema de fertirrigacion estara activado por 10 segundos");
+                    out.println(10000);
+                    out.flush();
+                    this.bomba.iniciarFertirrigacion();
+                    Thread.sleep(10000);
+                    this.bomba.terminaFertirrigacion();
+                }else{
+                    int tiempo = tiempoRiegoParcela(this.parcela,0.5,0.1,0.5);
+                    if(tiempo > 0){
+                        
+                    out.println(tiempo);
+                    out.flush();
+                    this.bomba.iniciarRiego(parcela);
+                    System.out.println("➡️ Enviado tiempo de riego: " + tiempo + " segundos a parcela " + this.parcela);
                     Thread.sleep(tiempo);
+                    this.bomba.terminarRiego(parcela);
+                        
+                    }
+                    
+                    
+                }
+                
                 } catch (InterruptedException ex) {
                     Logger.getLogger(HiloReceptorElectrovalvula.class.getName()).log(Level.SEVERE, null, ex);
                 }

@@ -11,21 +11,14 @@ public class DatosINR {
     private boolean sensorLluvia;
 
     
-     /*
+    /*
     La clase "DatosINR" ayudará a manejar el calulo del Indice de Necesidad de Riego.
     Almacena datos relacionados con los sensores, y puede calcular los indices.
-    
-    Explicacion: "sensorHX" almacena la humedad detectada y enviada por los sensores.
-    Cada numero representa la parcela de donde viene. "sensorH1" almacena la información
-    enviada por el sensor de humedad de la parcela 1.
     */
     
-    
-    /**Calcula el Indice de Necesidad de Riego. Para ello, se pasa el dato de 
-     * humedad por parte del sensor indicado por calcularINR(int sensor, ...),
-     * y los pesos usados en la formula de INR.
+    /**Calcula el Indice de Necesidad de Riego. Para ello, se pasa un sensor
      *
-     * @param h
+     * @param sensor
      * @param w1
      * @param w2
      * @param w3
@@ -41,19 +34,7 @@ public class DatosINR {
              + w3 * (sensorRad / 1000.0);
     }
 
-    /**
-     *
-     * Primer paso en el camino para calcular el Indice de Necesidad de Riego (INR).
-     * Para esto, utiliza un switch case en donde se pasa el sensor para el cual
-     * se calcula el INR. En base al número pasado se calcula el INR para la
-     * parcela indicada.
-     * @param sensor
-     * @param w1
-     * @param w2
-     * @param w3
-     * @return
-     */
-
+    
     public double calcularINR(int sensor, double w1, double w2, double w3) {
         switch (sensor) {
             case 1: return calcularINR(sensorH1, w1, w2, w3);

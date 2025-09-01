@@ -13,7 +13,6 @@ import java.util.logging.Logger;
  * @author Evelin
  */
 import java.io.*;
-import java.net.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ElectroValvula {
@@ -211,7 +210,7 @@ public class ElectroValvula {
             
             PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
 
-            outToServer.println("electroValvula");
+            outToServer.println("electroValvula1");
             outToServer.flush();
             
             HiloSensadoElectrovalvula Electrovalvula = new HiloSensadoElectrovalvula(cliente, outToServer);
