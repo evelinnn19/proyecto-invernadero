@@ -53,24 +53,23 @@ public class HiloSensadoElectrovalvula extends Thread{
         try {
             while (prendido) {
                 
-                try {
-                    int TiempoEspera =Integer.parseInt(br.readLine());
-                    System.out.println("La eletrovalvula estara abierta por " + TiempoEspera);
-                    
-                    Thread.sleep(TiempoEspera);
-                    
-                    System.out.println("✅ Electroválvula cerrada después de " + TiempoEspera + " segundos");
-                    
-                } catch (IOException ex) {
-                    Logger.getLogger(HiloSensadoElectrovalvula.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        String orden = br.readLine();
+            if (orden == null) break;
+
+            if (orden.equals("ON")) {
+                System.out.println("💧 Electrovalvula2 abierta (riego general)");
+                // acá simulás apertura
+            } else if (orden.equals("OFF")) {
+                System.out.println("💧 Electrovalvula2 cerrada (riego general)");
+                // acá simulás cierre
+            }
                 
            
                                 
                 
             }
 
-        } catch (InterruptedException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(HiloSensadoElectrovalvula.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
