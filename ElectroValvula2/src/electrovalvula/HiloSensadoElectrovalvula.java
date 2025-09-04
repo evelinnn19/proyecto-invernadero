@@ -57,10 +57,10 @@ public class HiloSensadoElectrovalvula extends Thread{
             if (orden == null) break;
 
             if (orden.equals("ON")) {
-                System.out.println("💧 Electrovalvula2 abierta (riego general)");
+                System.out.println("Electrovalvula2 abierta (riego general)");
                 // acá simulás apertura
             } else if (orden.equals("OFF")) {
-                System.out.println("💧 Electrovalvula2 cerrada (riego general)");
+                System.out.println("Electrovalvula2 cerrada (riego general)");
                 // acá simulás cierre
             }
                 

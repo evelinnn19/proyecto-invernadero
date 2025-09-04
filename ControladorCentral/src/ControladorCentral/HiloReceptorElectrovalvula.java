@@ -76,16 +76,7 @@ public class HiloReceptorElectrovalvula extends Thread{
 
                 try {
                     
-                
-                
-                if(this.esFerti){
-                    System.out.println("el sistema de fertirrigacion estara activado por 10 segundos");
-                    out.println(10000);
-                    out.flush();
-                    this.bomba.iniciarFertirrigacion();
-                    Thread.sleep(10000);
-                    this.bomba.terminaFertirrigacion();
-                }else{
+                    
                     int tiempo = tiempoRiegoParcela(this.parcela,0.5,0.1,0.5);
                     if(tiempo > 0){
                         
@@ -95,10 +86,8 @@ public class HiloReceptorElectrovalvula extends Thread{
                     System.out.println("➡️ Enviado tiempo de riego: " + tiempo + " segundos a parcela " + this.parcela);
                     Thread.sleep(tiempo);
                     this.bomba.terminarRiego(parcela);
-                        
-                    }
-                    
-                    
+                                       
+
                 }
                 
                 } catch (InterruptedException ex) {

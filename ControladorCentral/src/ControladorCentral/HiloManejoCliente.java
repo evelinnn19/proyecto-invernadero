@@ -85,11 +85,15 @@ public class HiloManejoCliente extends Thread {
                     HiloReceptorLluvia hrll = new HiloReceptorLluvia(cliente,datos);
                     hrll.start();
                     break;
+                case "sistemaFertirrigacion":
+                    System.out.println("Se detectó una conexion con el sistema de fertirrigacion.");
+                    HiloReceptorFertirrigacion hrf = new HiloReceptorFertirrigacion(cliente,bomba);
+                    hrf.start();
+                    break;
                     //Este es para el sistema de fertirrigación
                 case "electroValvula1":
                     System.out.println("Se detectó una conexion para una electro valvula");
-                    HiloReceptorElectrovalvula hre1 = new HiloReceptorElectrovalvula(cliente,datos,0,bomba,true);
-                    hre1.start();
+                    bomba.setElectroValvulaFerti(cliente);
                     break;
                     //Este es la Valvula de riego
                 case "electroValvula2":

@@ -7,6 +7,8 @@ package ControladorCentral;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -17,6 +19,7 @@ public class CoordinadorBomba {
     private boolean fertirrigando = false;
     private boolean riegoGeneral = false;
     private PrintWriter outGeneral; // para enviar a EV2
+    private PrintWriter outferti;
     
     
     //Inicia un riego (si se esta fertirrigando, lo bloquea)
@@ -42,6 +45,17 @@ public class CoordinadorBomba {
     }
 }
     
+    
+    
+    //Comunicación Valvula Ferti
+    public synchronized void setElectroValvulaFerti(Socket cliente){
+        try{
+            this.outferti = new PrintWriter(cliente.getOutputStream());
+        } catch (IOException ex) {
+            Logger.getLogger(CoordinadorBomba.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     //Termina el riego
     public synchronized void terminarRiego(int parcela){
         valvulasRiegoActivas--;
@@ -61,13 +75,13 @@ public class CoordinadorBomba {
     //Riego general
     private void iniciarRiegoGeneral() {
         riegoGeneral = true;
-        System.out.println("💧 Electrovalvula2 abierta (riego general)");
+        System.out.println("Electrovalvula2 abierta (riego general)");
         if (outGeneral != null) outGeneral.println("ON");
     }
 
     private void terminarRiegoGeneral() {
         riegoGeneral = false;
-        System.out.println("💧 Electrovalvula2 cerrada (riego general)");
+        System.out.println("Electrovalvula2 cerrada (riego general)");
          if (outGeneral != null) outGeneral.println("OFF");
     }
     
@@ -78,13 +92,15 @@ public class CoordinadorBomba {
             wait(); // espera hasta que nadie esté regando
         }
         fertirrigando = true;
-        System.out.println("🚰 Bomba asignada a FERTIRRIGACIÓN");
+        System.out.println("Bomba asignada a FERTIRRIGACIÓN");
+         if (outferti != null) outferti.println("ON");
     }
     
     //termina fertirrigación
     public synchronized void terminaFertirrigacion(){
         fertirrigando = false;
         System.out.println("Fertirrigacion terminada");
+        if (outferti != null) outferti.println("OFF");
         notifyAll();
     }
     
