@@ -41,7 +41,7 @@ public class HiloReceptorTemperatura extends Thread {
             try {
                 String Entrada = br.readLine();
                 setTemperatura(Double.parseDouble(Entrada));
-                System.out.println("El servidor recibio la temperatura: " + getTemperatura() + "Celsius.");
+                //System.out.println("El servidor recibio la temperatura: " + getTemperatura() + "Celsius.");
                 this.datos.setSensorTemp(temperatura);
 
             } catch (IOException ex) {

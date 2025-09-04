@@ -27,6 +27,7 @@ public class DatosINR {
     private double calcularINR(double h, double w1, double w2, double w3) {
         if (sensorLluvia) {
             System.out.println("Lluvia detectada, riego inhibido.");
+            
             return 0;
         }
         return w1 * (1 - h / 100.0)

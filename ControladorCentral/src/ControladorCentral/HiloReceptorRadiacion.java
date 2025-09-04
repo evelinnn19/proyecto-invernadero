@@ -41,7 +41,7 @@ public class HiloReceptorRadiacion extends Thread {
             try {
                 String Entrada = br.readLine();
                 setRadiacion(Double.parseDouble(Entrada));
-                System.out.println("El servidor recibio la radiacion: " + getRadiacion());
+                //System.out.println("El servidor recibio la radiacion: " + getRadiacion());
                 this.datos.setSensorRad(radiacion);
 
             } catch (IOException ex) {

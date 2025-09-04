@@ -69,7 +69,7 @@ public class HiloReceptorHumedad extends Thread {
             try {
                 String Entrada = br.readLine();
                 setHumedad(Double.parseDouble(Entrada));
-                System.out.println("El servidor recibió la humedad: " + getHumedad() + " del sensor Numero " + parcela);
+                //System.out.println("El servidor recibió la humedad: " + getHumedad() + " del sensor Numero " + parcela);
                 setDatosSensorHumedad(parcela);
             } catch (IOException ex) {
                 Logger.getLogger(HiloReceptorHumedad.class.getName()).log(Level.SEVERE, null, ex);

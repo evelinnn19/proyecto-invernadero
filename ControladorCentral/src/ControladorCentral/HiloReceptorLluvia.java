@@ -41,7 +41,7 @@ public class HiloReceptorLluvia extends Thread{
             try {
                 String Entrada = br.readLine();
                 setLlueve(Boolean.parseBoolean(Entrada));
-                System.out.println("El servidor recibio la siguiente informacion de lluvia: " + getLlueve());
+                //System.out.println("El servidor recibio la siguiente informacion de lluvia: " + getLlueve());
                 this.datos.setSensorLluvia(llueve);
                 
             } catch (IOException ex) {
