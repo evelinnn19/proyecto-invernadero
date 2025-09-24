@@ -51,7 +51,10 @@ public class HiloSensadoElectrovalvula extends Thread {
             while (prendido) {
                 
         String orden = br.readLine();
-            if (orden == null) break;
+            if (orden == null){
+                System.out.println("Orden es null");
+            }
+            
 
             if (orden.equals("ON")) {
                 System.out.println("Electrovalvula3 abierta (riego general)");

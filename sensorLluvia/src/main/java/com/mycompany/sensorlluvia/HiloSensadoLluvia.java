@@ -20,8 +20,9 @@ public class HiloSensadoLluvia extends Thread {
     }
 
     public void generarLluviaAleatoria() {
-        Random random = new Random();
-        llueve = random.nextBoolean();
+       Random random = new Random();
+        double probabilidadLluvia = 0.2; // 20% de chance
+        llueve = random.nextDouble() < probabilidadLluvia;
     }
 
     public void apagar() {
@@ -32,6 +33,7 @@ public class HiloSensadoLluvia extends Thread {
         prendido = Boolean.TRUE;
     }
 
+    @Override
     public void run() {
         prendido = Boolean.TRUE;
         //usar prendido como condicion podría ayudar a controlar cuando queremos sensar la humedad.
@@ -42,7 +44,7 @@ public class HiloSensadoLluvia extends Thread {
                 System.out.println("Llueve?: " + llueve);
                 haciaServer.flush();
                 
-                Thread.sleep(5000);
+                Thread.sleep(25000);
             }
 
         } catch (InterruptedException ex) {

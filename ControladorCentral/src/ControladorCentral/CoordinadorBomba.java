@@ -89,6 +89,7 @@ public class CoordinadorBomba {
     //Inicia fertirrigado
     public synchronized void iniciarFertirrigacion() throws InterruptedException{
         while (valvulasRiegoActivas > 0 || riegoGeneral) {
+            System.out.println("Fertirrigacion en espera...");
             wait(); // espera hasta que nadie esté regando
         }
         fertirrigando = true;

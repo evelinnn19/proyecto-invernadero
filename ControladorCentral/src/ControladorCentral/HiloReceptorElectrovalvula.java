@@ -77,8 +77,7 @@ public class HiloReceptorElectrovalvula extends Thread {
             try {
                 if (this.datos.isSensorLluvia()) {
                     System.out.println("Lluvia detectada. Riego inhibido.");
-                    tiempo = 0;
-                    Thread.sleep(10000);
+                    Thread.sleep(25000);
                 } else {
                     tiempo = tiempoRiegoParcela(this.parcela, 0.5, 0.1, 0.5);
                     if (tiempo > 0) {
