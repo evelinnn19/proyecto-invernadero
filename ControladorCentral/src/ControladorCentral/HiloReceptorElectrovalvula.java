@@ -49,7 +49,7 @@ public class HiloReceptorElectrovalvula extends Thread {
                 System.out.println("Se regara por 5 minutos");
                 return 5000;
             }
-            if (INR > 0.8 && INR < 0.9) {
+            if (INR >= 0.8 && INR < 0.9) {
                 System.out.println("Se regará por 7 minutos");
                 return 7000;
             } else {
@@ -89,7 +89,8 @@ public class HiloReceptorElectrovalvula extends Thread {
                         this.bomba.terminarRiego(parcela);
                         out.println("OFF");
                         out.flush();
-
+                        //Espera un tiempo hasta volver a regar
+                        Thread.sleep(10000);
                     }
                 }
 

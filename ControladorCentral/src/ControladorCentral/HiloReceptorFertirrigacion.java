@@ -48,6 +48,8 @@ public class HiloReceptorFertirrigacion extends Thread{
                 String espera = br.readLine();
                 if("FERTI_OK".equals(espera)){
                     this.bomba.terminaFertirrigacion();
+                    System.out.println("Pausa fertirrigacion por: 20 segundos");
+                    Thread.sleep(20000);
                 }
                 
             }   catch (InterruptedException | IOException ex) {
