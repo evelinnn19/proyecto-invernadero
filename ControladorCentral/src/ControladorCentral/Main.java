@@ -1,8 +1,11 @@
 package ControladorCentral;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +38,21 @@ public class Main {
             ServerSocket server = new ServerSocket(20000);
             System.out.println("Socket de conexion iniciado.");
             //cuando este prenddo el servidor
+            
+            RMIClienteBomba clienteRMI;
+            
+            while(true){
+                try {
+                clienteRMI = new RMIClienteBomba("rmi://localhost:10000/servidorCentralEM");
+                coordinador.setRmiCliente(clienteRMI);
+                System.out.println("Cliente RMI inicializado y conectado al servidor");
+                break;
+            } catch (RemoteException | MalformedURLException | NotBoundException ex) {
+                
+            }
+            }
+            
+            
             
             while (true) {
                 System.out.println("Esperando a una conexion.");

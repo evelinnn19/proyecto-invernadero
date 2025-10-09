@@ -81,9 +81,9 @@ public class HiloReceptorElectrovalvula extends Thread {
                 } else {
                     tiempo = tiempoRiegoParcela(this.parcela, 0.5, 0.1, 0.5);
                     if (tiempo > 0) {
+                        this.bomba.iniciarRiego(parcela);
                         out.println("ON");
                         out.flush();
-                        this.bomba.iniciarRiego(parcela);
                         System.out.println("➡️ Enviado tiempo de riego: " + tiempo + " segundos a parcela " + this.parcela);
                         Thread.sleep(tiempo);
                         this.bomba.terminarRiego(parcela);
