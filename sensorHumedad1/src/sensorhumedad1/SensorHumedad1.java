@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 public class SensorHumedad1 {
 
 
-    public static void restablecerConexion(){
+    public static void restablecerConexion() throws InterruptedException{
         try{
             System.out.println("Restablecimiento de la conexión.");
             Socket cliente = new Socket(InetAddress.getByName("localhost"), 20000);
@@ -29,7 +29,7 @@ public class SensorHumedad1 {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         try{
             System.out.println("Inicio de la conexión.");
             Socket cliente = new Socket(InetAddress.getByName("localhost"), 20000);

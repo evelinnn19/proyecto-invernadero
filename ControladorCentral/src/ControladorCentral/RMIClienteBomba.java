@@ -5,17 +5,18 @@ import com.sistdist.interfaces.IServicioExclusionMutua;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.concurrent.CountDownLatch;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Cliente RMI usado por el CoordinadorBomba para solicitar/soltar el recurso (bomba).
  */
 public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
 
-    private IServicioExclusionMutua servicio; // stub remoto
-    private CountDownLatch latch; // para esperar al token
+   private IServicioExclusionMutua servicio; // stub remoto
+    private final Semaphore sem = new Semaphore(0); // inicio 0: bloqueado
 
     public RMIClienteBomba(String servidorUrl) throws RemoteException, MalformedURLException, NotBoundException {
         super();
@@ -24,32 +25,34 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
     }
 
     /**
-     * Llamar antes de entrar en sección crítica (antes de abrir electrovalvula general o asignar bomba).
-     * Bloquea hasta que RecibirToken sea invocado por el servidor.
+     * Llamar antes de entrar en sección crítica (antes de abrir electrovalvula general o asignar bomba).Bloquea hasta que RecibirToken sea invocado por el servidor.
+     * @throws java.rmi.RemoteException
+     * @throws java.lang.InterruptedException
      */
     public void solicitarRecurso() throws RemoteException, InterruptedException {
-        latch = new CountDownLatch(1);
-        servicio.ObtenerRecurso(this);
-        // Espera hasta que RecibirToken() haga countDown
-        latch.await();
+         servicio.ObtenerRecurso(this);
+        sem.acquire();
     }
 
     /**
      * Llamar al salir de la sección crítica.
+     * @throws java.rmi.RemoteException
+     * @throws java.lang.InterruptedException
      */
-    public void devolverRecurso() throws RemoteException {
-        servicio.DevolverRecurso();
+    public void devolverRecurso() throws RemoteException, InterruptedException {
+        servicio.ObtenerRecurso(this);
+        sem.acquire(); // espera hasta que RecibirToken haga release()
     }
+    
+    
 
     /**
-     * Callback invocado remotamente por el servidor cuando el token está disponible.
-     * Desbloquea al hilo que esperaba.
+     * Callback invocado remotamente por el servidor cuando el token está disponible.Desbloquea al hilo que esperaba.
+     * @throws java.rmi.RemoteException
      */
     @Override
     public void RecibirToken() throws RemoteException {
-        if (latch != null) {
-            latch.countDown();
-        }
+        if (sem.availablePermits() == 0) sem.release(); // evita acumulación
         System.out.println("RMIClienteBomba: Recibí el token del servidor de exclusión mutua.");
     }
 }

@@ -17,6 +17,8 @@ public class HiloReceptorHumedad extends Thread {
     private PrintWriter out;
     private DatosINR datos;
     
+    
+    
 
     public HiloReceptorHumedad(Socket ch, DatosINR datos, int parcela) {
         this.datos = datos;

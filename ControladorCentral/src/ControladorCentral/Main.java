@@ -30,9 +30,14 @@ public class Main {
 
         try {
         //objeto unico DatosINR
+        //Impresor para regular los mensajes
+            Impresor impresor = new Impresor();
         
             DatosINR datos = new DatosINR();
+            datos.setImp(impresor);
+            impresor.start();
             CoordinadorBomba coordinador = new CoordinadorBomba();
+            coordinador.setImp(impresor);
             
             System.out.println("Inicio del Invernadero.");
             ServerSocket server = new ServerSocket(20000);
@@ -57,7 +62,7 @@ public class Main {
             while (true) {
                 System.out.println("Esperando a una conexion.");
                 Socket s = server.accept();
-                HiloManejoCliente cliente = new HiloManejoCliente(s,datos,coordinador);
+                HiloManejoCliente cliente = new HiloManejoCliente(s,datos,coordinador,impresor);
                 System.out.println("Se detecto una conexión. --->   " + s);
                 
                 cliente.start();

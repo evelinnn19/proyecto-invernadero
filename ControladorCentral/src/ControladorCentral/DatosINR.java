@@ -9,6 +9,16 @@ public class DatosINR {
     private double sensorTemp;
     private double sensorRad;
     private boolean sensorLluvia;
+    
+    private Impresor imp;
+
+    public Impresor getImp() {
+        return imp;
+    }
+
+    public void setImp(Impresor imp) {
+        this.imp = imp;
+    }
 
     
     /*
@@ -37,14 +47,37 @@ public class DatosINR {
 
     
     public double calcularINR(int sensor, double w1, double w2, double w3) {
+        double INR;
         switch (sensor) {
-            case 1: return calcularINR(sensorH1, w1, w2, w3);
-            case 2: return calcularINR(sensorH2, w1, w2, w3);
-            case 3: return calcularINR(sensorH3, w1, w2, w3);
-            case 4: return calcularINR(sensorH4, w1, w2, w3);
-            case 5: return calcularINR(sensorH5, w1, w2, w3);
-            default: throw new IllegalArgumentException("Número de parcela inválido: " + sensor);
+            case 1 -> INR = calcularINR(this.sensorH1, w1, w2, w3);
+            case 2 -> INR = calcularINR(this.sensorH2, w1, w2, w3);
+            case 3 -> INR = calcularINR(this.sensorH3, w1, w2, w3);
+            case 4 -> INR = calcularINR(this.sensorH4, w1, w2, w3);
+            case 5 -> INR = calcularINR(this.sensorH5, w1, w2, w3);
+            default -> throw new IllegalArgumentException("Número de parcela inválido: " + sensor);
         }
+
+        // si hay impresor, avisarle (con chequeo por si no fue seteado)
+        if (imp != null) {
+            imp.setINR(sensor, INR);
+        } else {
+            // opcional: log o advertencia
+            System.err.println("Impresor no configurado: INR calculado pero no informado. Parcela: " + sensor);
+        }
+
+        return INR;
+    }
+    
+    private void setSensores(){
+        imp.setH1(sensorH1);
+        imp.setH2(sensorH2);
+        imp.setH3(sensorH3);
+        imp.setH4(sensorH4);
+        imp.setH5(sensorH5);
+        imp.setTemperatura(sensorTemp);
+        imp.setRad(sensorRad);
+        imp.setLluvia(sensorLluvia);
+        
     }
     
     public double getSensorH1() {
@@ -53,6 +86,7 @@ public class DatosINR {
 
     public void setSensorH1(double sensorH1) {
         this.sensorH1 = sensorH1;
+        setSensores();
     }
 
     public double getSensorH2() {
@@ -61,6 +95,7 @@ public class DatosINR {
 
     public void setSensorH2(double sensorH2) {
         this.sensorH2 = sensorH2;
+        setSensores();
     }
 
     public double getSensorH3() {
@@ -69,6 +104,7 @@ public class DatosINR {
 
     public void setSensorH3(double sensorH3) {
         this.sensorH3 = sensorH3;
+        setSensores();
     }
 
     public double getSensorH4() {
@@ -77,6 +113,7 @@ public class DatosINR {
 
     public void setSensorH4(double sensorH4) {
         this.sensorH4 = sensorH4;
+        setSensores();
     }
 
     public double getSensorH5() {
@@ -85,6 +122,7 @@ public class DatosINR {
 
     public void setSensorH5(double sensorH5) {
         this.sensorH5 = sensorH5;
+        setSensores();
     }
 
     public double getSensorTemp() {

@@ -35,7 +35,7 @@ public class ElectroValvula {
     }
 
 
-    public void restablecerConexion(){
+    public void restablecerConexion() throws InterruptedException{
         try{
             System.out.println("Restablecimiento de la conexion.");
             Socket cliente = new Socket(InetAddress.getByName("localhost"), 20000);
@@ -49,7 +49,7 @@ public class ElectroValvula {
         } catch (IOException e) {
             System.out.println("Error al restablecer la conexion: " + e.getMessage());
             Thread.sleep(5000); // Esperar 5 segundos antes de reintentar
-            restablecerConexion();
+            restablecerConexion(); //Esto es para que vuelva a tener 
 
         }
     }

@@ -15,6 +15,8 @@ public class HiloReceptorTemperatura extends Thread {
     private PrintWriter out;
     private double temperatura;
     private DatosINR datos;
+    
+    
 
     public HiloReceptorTemperatura(Socket ch,DatosINR datos) {
         this.datos = datos;

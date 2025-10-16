@@ -26,6 +26,7 @@ public class HiloReceptorFertirrigacion extends Thread{
     private PrintWriter out;
     private CoordinadorBomba bomba;
     
+    
 
     public HiloReceptorFertirrigacion(Socket ch,CoordinadorBomba bomba) {
         this.cliente = ch;

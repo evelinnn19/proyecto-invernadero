@@ -26,6 +26,16 @@ public class HiloReceptorElectrovalvula extends Thread {
     private DatosINR datos;
     private CoordinadorBomba bomba;
     private boolean esFerti;
+    private Impresor imp;
+
+    public Impresor getImp() {
+        return imp;
+    }
+
+    public void setImp(Impresor imp) {
+        this.imp = imp;
+    }
+    
 
     public HiloReceptorElectrovalvula(Socket ch, DatosINR datos, int parcela, CoordinadorBomba bomba, boolean fer) {
         this.datos = datos;
@@ -80,6 +90,7 @@ public class HiloReceptorElectrovalvula extends Thread {
                     Thread.sleep(25000);
                 } else {
                     tiempo = tiempoRiegoParcela(this.parcela, 0.5, 0.1, 0.5);
+                    imp.setTiempos(this.parcela,tiempo);
                     if (tiempo > 0) {
                         this.bomba.iniciarRiego(parcela);
                         out.println("ON");

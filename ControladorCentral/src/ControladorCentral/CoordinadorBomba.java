@@ -19,13 +19,22 @@ public class CoordinadorBomba {
     private boolean riegoGeneral = false;
     private PrintWriter outGeneral; // para enviar a EV2
     private PrintWriter outferti;
+
+    public Impresor getImp() {
+        return imp;
+    }
+
+    public void setImp(Impresor imp) {
+        this.imp = imp;
+    }
     
     // Lock y conditions para control de concurrencia
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition puedeRegar = lock.newCondition();
     private final Condition puedeFertirregar = lock.newCondition();
     
-    
+    //impresor
+    private Impresor imp;
     //Campo para cliente RMI
     private RMIClienteBomba rmiCliente;
     
@@ -50,32 +59,13 @@ public class CoordinadorBomba {
         System.out.println(valvulasRiegoActivas + " Valvulas de riego activas");
 
         if (valvulasRiegoActivas == 1) {
-            // Vamos a solicitar la bomba remotamente. No mantenemos el lock durante la llamada RMI
-            lock.unlock(); // liberamos para no bloquear otros hilos mientras esperamos al servidor RMI
-            try {
-                if (rmiCliente != null) {
-                    try {
-                        // puede lanzar RemoteException o InterruptedException
-                        rmiCliente.solicitarRecurso();
-                        // si retorna sin excepción, tenemos el token (o se aplicó la política de espera)
-                    } catch (RemoteException rex) {
-                        System.err.println("Error RMI al solicitar recurso: " + rex.getMessage());
-                        // Política: decidimos continuar en modo local (fallback) o podríamos reintentar.
-                    }
-                } else {
-                    System.out.println("RMI no inicializado - procediendo en modo local.");
-                }
-            } finally {
-                // Nos aseguramos de volver a tomar el lock pase lo que pase (excepción incluida)
-                lock.lock();
-            }
-
-            // Abrimos la electrovalvula general **después** de solicitar el recurso
+        // Abrimos la electrovalvula general **después** de solicitar el recurso
+            lock.unlock();
             iniciarRiegoGeneral();
         }
     } finally {
         // Este unlock corresponde al lock.lock() del inicio del método
-        lock.unlock();
+        
     }
 }
 
@@ -115,15 +105,11 @@ public class CoordinadorBomba {
             System.out.println("La parcela " + parcela + " termino el riego");
             System.out.println(valvulasRiegoActivas + " Valvulas de riego activas");
             
-            if (valvulasRiegoActivas == 0) {
+            if (valvulasRiegoActivas <= 0) {
+                lock.unlock();
                 terminarRiegoGeneral();
                 //Libera recurso remoto
-                try{
-                    if(rmiCliente != null) rmiCliente.devolverRecurso();
-                }catch (RemoteException ex){
-                    System.out.println("Error RMI al devolver recurso");
-                }
-                puedeFertirregar.signalAll(); // Notifica que se puede iniciar fertirrigación
+                puedeFertirregar.signal(); // Notifica que se puede iniciar fertirrigación
             }
         } finally {
             lock.unlock();
@@ -135,58 +121,97 @@ public class CoordinadorBomba {
     //Riego general
     private void iniciarRiegoGeneral() {
         // Método ya está dentro del lock cuando se llama
-        riegoGeneral = true;
-        System.out.println("Electrovalvula2 abierta (riego general)");
-        if (outGeneral != null) outGeneral.println("ON");
+        try{
+            rmiCliente.solicitarRecurso();
+            
+        } 
+        catch (RemoteException ex) {
+            System.out.println("RMI no encontrado");
+        } catch (InterruptedException ex) {
+            Logger.getLogger(CoordinadorBomba.class.getName()).log(Level.SEVERE, null, ex);
+        }finally{
+    //Enviar datos al impresor
+            riegoGeneral = true;
+            imp.setRiegoGeneral(riegoGeneral);
+            System.out.println("Electrovalvula2 abierta (riego general)");
+            if (outGeneral != null) outGeneral.println("ON");
+        
+    }
     }
 
-    private void terminarRiegoGeneral() {
+    private void terminarRiegoGeneral(){
         // Método ya está dentro del lock cuando se llama
-        riegoGeneral = false;
-        System.out.println("Electrovalvula2 cerrada (riego general)");
-        if (outGeneral != null) outGeneral.println("OFF");
+        try{
+            rmiCliente.devolverRecurso();
+            if (outGeneral != null) outGeneral.println("OFF");
+            riegoGeneral = false;
+            imp.setRiegoGeneral(riegoGeneral);
+            System.out.println("Electrovalvula2 cerrada (riego general)");
+            
+        }catch(InterruptedException e){
+            System.out.println("Se desconecto la electrovalvula");
+        } catch (RemoteException ex) {
+            System.out.println("Se desconecto el RMI");
+        }
+        
     }
     
     
     //Inicia fertirrigación
     public void iniciarFertirrigacion() throws InterruptedException {
-        lock.lock();
-        try {
-            while (valvulasRiegoActivas > 0 || riegoGeneral) {
-                System.out.println("Fertirrigacion en espera...");
-                puedeFertirregar.await(); // espera hasta que nadie esté regando
-            }
-            lock.unlock();
-            try{
-                if(rmiCliente != null){
-                    rmiCliente.solicitarRecurso();
-                }else{
-                    System.out.println("RMI no configurado");
+            // 1) esperar condición dentro del lock
+            lock.lock();
+            try {
+                while (valvulasRiegoActivas > 0 || riegoGeneral) {
+                    System.out.println("Fertirrigacion en espera...");
+                    //Puedo mandar al impresor ese mensaje
+                    puedeFertirregar.await();
                 }
-            }catch(RemoteException ex){
-                System.out.println("Error RMI");
+                // ya cumplida la condición: liberamos lock para la llamada remota
+            } finally {
+                lock.unlock();
             }
-            fertirrigando = true;
-            System.out.println("Bomba asignada a FERTIRRIGACIÓN");
-            if (outferti != null) outferti.println("ON");
-        } finally {
-            lock.unlock();
-        }
+            
+             // 2) hacer la llamada RMI fuera del lock
+            try {
+                if (rmiCliente != null) rmiCliente.solicitarRecurso();
+                else System.out.println("RMI no configurado");
+            } catch (RemoteException ex) {
+                System.out.println("Error RMI");
+                // política: fallback o abortar
+            }
+    
+            // 3) volver a tomar el lock para modificar estado compartido
+            lock.lock();
+            try {
+                fertirrigando = true;
+                imp.setFertirrigacion(fertirrigando);
+                if (outferti != null) outferti.println("ON");
+            } finally {
+                lock.unlock();
+            }
+            
+
     }
     
     //termina fertirrigación
     public void terminaFertirrigacion() {
         lock.lock();
         try {
-            fertirrigando = false;
+            
+            try{
+                lock.unlock();
+                if(rmiCliente != null) rmiCliente.devolverRecurso();
+                fertirrigando = false;
+                imp.setFertirrigacion(fertirrigando);
             System.out.println("Fertirrigacion terminada");
             if (outferti != null) outferti.println("OFF");
-            try{
-                if(rmiCliente != null) rmiCliente.devolverRecurso();
             }catch(RemoteException ex){
                 System.out.println("Error RMI al devolver recurso");
+            } catch (InterruptedException ex) {
+                System.out.println("Conexión con fertirrigación no encontrada");
             }
-            puedeRegar.signalAll(); // Notifica que se puede iniciar riego
+            puedeRegar.signal();// Notifica que se puede iniciar riego
         } finally {
             lock.unlock();
         }

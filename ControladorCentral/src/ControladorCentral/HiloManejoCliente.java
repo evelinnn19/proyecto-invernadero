@@ -23,9 +23,11 @@ public class HiloManejoCliente extends Thread {
     private PrintWriter out;
     private DatosINR datos;
     private CoordinadorBomba bomba;
+    private Impresor impresora;
 
-    public HiloManejoCliente(Socket ch,DatosINR datos,CoordinadorBomba bomba) {
+    public HiloManejoCliente(Socket ch,DatosINR datos,CoordinadorBomba bomba, Impresor imp) {
         cliente = ch;
+        impresora = imp;
         this.datos = datos;
         this.bomba = bomba;
         try {
@@ -104,26 +106,31 @@ public class HiloManejoCliente extends Thread {
                 case "electroValvula3":
                     System.out.println("Se detectó una conexion para una electro valvula");
                     HiloReceptorElectrovalvula hre3 = new HiloReceptorElectrovalvula(cliente,datos,1,bomba,false);
+                    hre3.setImp(impresora);
                     hre3.start();
                     break;
                 case "electroValvula4":
                     System.out.println("Se detectó una conexion para una electro valvula");
                     HiloReceptorElectrovalvula hre4 = new HiloReceptorElectrovalvula(cliente,datos,2,bomba,false);
+                    hre4.setImp(impresora);
                     hre4.start();
                     break;
                 case "electroValvula5":
                     System.out.println("Se detectó una conexion para una electro valvula");
                     HiloReceptorElectrovalvula hre5 = new HiloReceptorElectrovalvula(cliente,datos,3,bomba,false);
+                    hre5.setImp(impresora);
                     hre5.start();
                     break;
                 case "electroValvula6":
                     System.out.println("Se detectó una conexion para una electro valvula");
                     HiloReceptorElectrovalvula hre6 = new HiloReceptorElectrovalvula(cliente,datos,4,bomba,false);
+                    hre6.setImp(impresora);
                     hre6.start();
                     break;
                 case "electroValvula7":
                     System.out.println("Se detectó una conexion para una electro valvula");
                     HiloReceptorElectrovalvula hre7 = new HiloReceptorElectrovalvula(cliente,datos,5,bomba,false);
+                    hre7.setImp(impresora);
                     hre7.start();
                     break;
                 default:

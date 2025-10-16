@@ -16,6 +16,8 @@ public class HiloReceptorLluvia extends Thread{
     private boolean llueve;
     private DatosINR datos;
     
+    
+    
     public HiloReceptorLluvia(Socket ch,DatosINR datos){
         this.datos = datos;
         clienteLluvia = ch;

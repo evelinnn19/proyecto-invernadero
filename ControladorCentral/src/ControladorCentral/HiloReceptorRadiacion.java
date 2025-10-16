@@ -15,6 +15,8 @@ public class HiloReceptorRadiacion extends Thread {
     private PrintWriter out;
     private double radiacion;
     private DatosINR datos;
+    
+    
 
     public HiloReceptorRadiacion(Socket ch,DatosINR datos) {
         this.datos = datos;
