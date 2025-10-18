@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ControladorCentral;
 
 import java.io.BufferedReader;
@@ -12,10 +8,6 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Alejandro
- */
 public class HiloReceptorElectrovalvula extends Thread {
 
     private Socket cliente;
@@ -27,6 +19,8 @@ public class HiloReceptorElectrovalvula extends Thread {
     private CoordinadorBomba bomba;
     private boolean esFerti;
     private Impresor imp;
+    private volatile boolean ejecutando;
+    private Thread hiloMonitorConexion;
 
     public Impresor getImp() {
         return imp;
@@ -35,7 +29,6 @@ public class HiloReceptorElectrovalvula extends Thread {
     public void setImp(Impresor imp) {
         this.imp = imp;
     }
-    
 
     public HiloReceptorElectrovalvula(Socket ch, DatosINR datos, int parcela, CoordinadorBomba bomba, boolean fer) {
         this.datos = datos;
@@ -43,10 +36,19 @@ public class HiloReceptorElectrovalvula extends Thread {
         this.bomba = bomba;
         this.parcela = parcela;
         this.esFerti = fer;
+        this.ejecutando = true;
+        
         try {
             this.br = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
             this.out = new PrintWriter(cliente.getOutputStream(), true);
+            
+            // Configurar socket para detectar desconexiones
+            cliente.setKeepAlive(true);
+            cliente.setSoTimeout(20000); // 20 segundos timeout
+            cliente.setTcpNoDelay(true);
+            
         } catch (IOException e) {
+            System.out.println("Error al configurar socket: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -56,15 +58,15 @@ public class HiloReceptorElectrovalvula extends Thread {
 
         if (!this.datos.isSensorLluvia()) {
             if (INR > 0.7 && INR < 0.8) {
-                System.out.println("Se regara por 5 minutos");
+                System.out.println("Se regará por 5 minutos");
                 return 5000;
             }
             if (INR >= 0.8 && INR < 0.9) {
                 System.out.println("Se regará por 7 minutos");
                 return 7000;
             } else {
-                if (INR > 0.9) {
-                    System.out.println("se regara por 10 minutos");
+                if (INR >= 0.9) {
+                    System.out.println("Se regará por 10 minutos");
                     return 10000;
                 }
             }
@@ -72,44 +74,217 @@ public class HiloReceptorElectrovalvula extends Thread {
         return 0;
     }
 
-    
-    /*
-    El metodo run de este receptor de electrovalvula calcula el tiempo de riego
-    de parcela en base al Indice de Necesidad de Riego. Se pregunta si llueve,
-    en cuyo caso se indica que está lloviendo y que no se regara. Caso contrario,
-    se calcula el tiempo en base al INR, y si es mayor que 0 (en ms), se envía
-    un mensaje indicando el tiempo para abrir.
-    */
+    // Monitor que escucha mensajes entrantes del cliente (PING, ACK, etc.)
+    private void iniciarMonitorMensajes() {
+        hiloMonitorConexion = new Thread(() -> {
+            try {
+                while (ejecutando && !Thread.currentThread().isInterrupted()) {
+                    // Verificar si hay datos disponibles para leer
+                    if (br.ready()) {
+                        String mensaje = br.readLine();
+                        
+                        if (mensaje == null) {
+                            System.out.println("Cliente desconectado (null) - Parcela " + parcela);
+                            manejarDesconexion();
+                            break;
+                        }
+                        
+                        procesarMensaje(mensaje);
+                    }
+                    
+                    // Verificar estado del socket
+                    if (verificarEstadoSocket()) {
+                        System.out.println("Socket cerrado - Parcela " + parcela);
+                        manejarDesconexion();
+                        break;
+                    }
+                    
+                    Thread.sleep(500); // Verificar cada medio segundo
+                }
+            } catch (IOException e) {
+                System.out.println("Error de I/O en monitor - Parcela " + parcela + ": " + e.getMessage());
+                manejarDesconexion();
+            } catch (InterruptedException e) {
+                System.out.println("Monitor de mensajes interrumpido - Parcela " + parcela);
+            }
+        });
+        
+        hiloMonitorConexion.setDaemon(true);
+        hiloMonitorConexion.start();
+    }
+
+    private void procesarMensaje(String mensaje) {
+        System.out.println("Mensaje recibido de parcela " + parcela + ": " + mensaje);
+        
+        if (mensaje.equals("PING")) {
+            // Responder al heartbeat del cliente
+            out.println("PONG");
+            out.flush();
+            
+            if (out.checkError()) {
+                System.out.println("Error al enviar PONG - Parcela " + parcela);
+                manejarDesconexion();
+            }
+            
+        } else if (mensaje.startsWith("ACK_")) {
+            // Confirmación recibida
+            System.out.println("Comando confirmado en parcela " + parcela + ": " + mensaje);
+            
+        } else if (mensaje.startsWith("STATUS:")) {
+            // Estado de la válvula
+            String estado = mensaje.substring(7);
+            System.out.println("Estado válvula parcela " + parcela + ": " + estado);
+            
+        } else if (mensaje.startsWith("ERROR:")) {
+            // Error reportado por el cliente
+            System.out.println("Error en parcela " + parcela + ": " + mensaje);
+            
+        } else {
+            System.out.println("Mensaje desconocido de parcela " + parcela + ": " + mensaje);
+        }
+    }
+
+    private boolean verificarEstadoSocket() {
+        try {
+            return cliente.isClosed() || 
+                   !cliente.isConnected() || 
+                   cliente.isInputShutdown() || 
+                   cliente.isOutputShutdown();
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    private void manejarDesconexion() {
+        System.out.println("CLIENTE DESCONECTADO - Parcela " + parcela);
+        
+        ejecutando = false;
+        
+        // Asegurar que la válvula esté cerrada
+        try {
+            if (bomba != null) {
+                bomba.terminarRiego(parcela);
+                System.out.println("Riego detenido por seguridad en parcela " + parcela);
+            }
+        } catch (Exception e) {
+            System.out.println("Error al detener riego: " + e.getMessage());
+        }
+        
+        cerrarRecursos();
+    }
+
+    private void cerrarRecursos() {
+        try {
+            if (br != null) {
+                br.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            if (cliente != null && !cliente.isClosed()) {
+                cliente.close();
+            }
+        } catch (IOException e) {
+            System.out.println("Error al cerrar recursos: " + e.getMessage());
+        }
+    }
+
+    public void detener() {
+        ejecutando = false;
+        if (hiloMonitorConexion != null) {
+            hiloMonitorConexion.interrupt();
+        }
+        cerrarRecursos();
+    }
+
     @Override
     public void run() {
-        int tiempo;
-        while (true) {
-            try {
-                if (this.datos.isSensorLluvia()) {
-                    System.out.println("Lluvia detectada. Riego inhibido.");
-                    Thread.sleep(25000);
-                } else {
-                    tiempo = tiempoRiegoParcela(this.parcela, 0.5, 0.1, 0.5);
-                    imp.setTiempos(this.parcela,tiempo);
-                    if (tiempo > 0) {
-                        this.bomba.iniciarRiego(parcela);
-                        out.println("ON");
-                        out.flush();
-                        System.out.println("➡️ Enviado tiempo de riego: " + tiempo + " segundos a parcela " + this.parcela);
-                        Thread.sleep(tiempo);
-                        this.bomba.terminarRiego(parcela);
-                        out.println("OFF");
-                        out.flush();
-                        //Espera un tiempo hasta volver a regar
-                        Thread.sleep(10000);
-                    }
+        try {
+            // Iniciar el monitor de mensajes entrantes
+            iniciarMonitorMensajes();
+            
+            System.out.println("Servidor listo para controlar parcela " + parcela);
+            
+            int tiempo;
+            
+            while (ejecutando) {
+                // Verificar conexión antes de operar
+                if (verificarEstadoSocket()) {
+                    System.out.println("Conexión perdida en ciclo principal - Parcela " + parcela);
+                    manejarDesconexion();
+                    break;
                 }
 
-            } catch (InterruptedException ex) {
-                Logger.getLogger(HiloReceptorElectrovalvula.class.getName()).log(Level.SEVERE, null, ex);
+                try {
+                    if (this.datos.isSensorLluvia()) {
+                        if (imp != null) {
+                            imp.setTiempos(this.parcela, 0);
+                        }
+                        System.out.println("Lloviendo - No se riega parcela " + parcela);
+                        Thread.sleep(5000);
+                        
+                    } else {
+                        tiempo = tiempoRiegoParcela(this.parcela, 0.5, 0.1, 0.5);
+                        
+                        if (imp != null) {
+                            imp.setTiempos(this.parcela, tiempo);
+                        }
+                        
+                        if (tiempo > 0) {
+                            this.bomba.iniciarRiego(parcela);
+                            
+                            // Enviar comando ON
+                            out.println("ON");
+                            out.flush();
+                            
+                            // Verificar si se envió correctamente
+                            if (out.checkError()) {
+                                System.out.println("Error al enviar ON - Parcela " + parcela);
+                                manejarDesconexion();
+                                break;
+                            }
+                            
+                            System.out.println("Riego iniciado en parcela " + parcela + " por " + (tiempo/1000) + " segundos");
+                            
+                            Thread.sleep(tiempo);
+                            
+                            this.bomba.terminarRiego(parcela);
+                            
+                            // Enviar comando OFF
+                            out.println("OFF");
+                            out.flush();
+                            
+                            // Verificar si se envió correctamente
+                            if (out.checkError()) {
+                                System.out.println("Error al enviar OFF - Parcela " + parcela);
+                                manejarDesconexion();
+                                break;
+                            }
+                            
+                            System.out.println("Riego finalizado en parcela " + parcela);
+                            
+                            // Espera un tiempo hasta volver a regar
+                            Thread.sleep(5000);
+                        } else {
+                            // No hay necesidad de riego
+                            Thread.sleep(5000);
+                        }
+                    }
+
+                } catch (InterruptedException ex) {
+                    System.out.println("Hilo interrumpido - Parcela " + parcela);
+                    Logger.getLogger(HiloReceptorElectrovalvula.class.getName()).log(Level.SEVERE, null, ex);
+                    break;
+                }
             }
-
+            
+        } catch (Exception ex) {
+            System.out.println("Error inesperado en parcela " + parcela + ": " + ex.getMessage());
+            Logger.getLogger(HiloReceptorElectrovalvula.class.getName()).log(Level.SEVERE, null, ex);
+            manejarDesconexion();
+        } finally {
+            cerrarRecursos();
+            System.out.println("Hilo receptor finalizado - Parcela " + parcela);
         }
-
     }
 }

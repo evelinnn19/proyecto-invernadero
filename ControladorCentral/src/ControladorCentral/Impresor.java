@@ -41,17 +41,9 @@ public class Impresor extends Thread{
         System.out.println(a);
     }
     
-    
-    
-public boolean todosListos() {
-    return (h1 != null && h2 != null && h3 != null && h4 != null && h5 != null && RiegoGeneral != null && Fertirrigacion != null);
-}
-
-    
-    @Override
-    public void run(){
-    while(true){
-            if(todosListos()){
+    public void mostrarMensaje(){
+        if(todosListos()){
+                System.out.println("Si imprimirá?");
                 System.out.println("===== ESTADO DEL SISTEMA =====");
                 System.out.printf("Radiacion: %.2f%n", rad);
                 System.out.printf("Llueve? %s%n", lluvia ? "si" : "no");
@@ -70,22 +62,30 @@ public boolean todosListos() {
                 System.out.println("-- FERTIRRIGACION --");
                 System.out.printf("Fertirrigacion: %s%n", Fertirrigacion ? "si" : "no");
 
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            } else {
-                // evitar busy-loop mientras esperamos datos
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
+
+            }
+        
+    }
+    
+    
+    
+public boolean todosListos() {
+    return (h1 != null && h2 != null && h3 != null && h4 != null && h5 != null && RiegoGeneral != null && Fertirrigacion != null);
+}
+
+    
+    @Override
+    public void run(){
+        while(true){
+            mostrarMensaje();
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Impresor.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        
+
     }
 
     // el resto de setters/getters igual

@@ -31,7 +31,7 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
      */
     public void solicitarRecurso() throws RemoteException, InterruptedException {
          servicio.ObtenerRecurso(this);
-        sem.acquire();
+        sem.acquire(); // espera hasta que RecibirToken haga release()
     }
 
     /**
@@ -40,8 +40,9 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
      * @throws java.lang.InterruptedException
      */
     public void devolverRecurso() throws RemoteException, InterruptedException {
-        servicio.ObtenerRecurso(this);
-        sem.acquire(); // espera hasta que RecibirToken haga release()
+        servicio.DevolverRecurso();
+        System.out.println("RMIClienteBomba: Recurso devuelto al servidor de exclusión mutua.");
+       
     }
     
     
