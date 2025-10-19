@@ -114,7 +114,7 @@ public class HiloReceptorElectrovalvula extends Thread {
     }
 
     private void procesarMensaje(String mensaje) {
-        System.out.println("Mensaje recibido de parcela " + parcela + ": " + mensaje);
+        //System.out.println("Mensaje recibido de parcela " + parcela + ": " + mensaje);
         
         if (mensaje.equals("PING")) {
             // Responder al heartbeat del cliente
@@ -128,7 +128,7 @@ public class HiloReceptorElectrovalvula extends Thread {
             
         } else if (mensaje.startsWith("ACK_")) {
             // Confirmación recibida
-            System.out.println("Comando confirmado en parcela " + parcela + ": " + mensaje);
+            //System.out.println("Comando confirmado en parcela " + parcela + ": " + mensaje);
             
         } else if (mensaje.startsWith("STATUS:")) {
             // Estado de la válvula

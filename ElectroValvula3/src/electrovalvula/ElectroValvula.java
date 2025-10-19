@@ -23,9 +23,9 @@ public class ElectroValvula {
         while (sistemaActivo && intentos < MAX_INTENTOS_RECONEXION) {
             try {
                 intentos++;
-                System.out.println("\n╔════════════════════════════════════════╗");
-                System.out.println("║  Intento de reconexión #" + intentos + "              ║");
-                System.out.println("╚════════════════════════════════════════╝");
+                System.out.println("\nI----------------------------------------I");
+                System.out.println("I  Intento de reconexión #" + intentos + "I");
+                System.out.println("I-----------------------------------------I");
                 
                 // Crear socket con timeout de conexión
                 Socket cliente = new Socket();
@@ -37,7 +37,7 @@ public class ElectroValvula {
                 cliente.setSoTimeout(TIMEOUT_SOCKET);
                 cliente.setTcpNoDelay(true);
                 
-                System.out.println("✓ Socket creado: " + cliente);
+                System.out.println("Socket creado: " + cliente);
                 
                 PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
                 outToServer.println("electroValvula3");
@@ -45,7 +45,7 @@ public class ElectroValvula {
                 
                 // Verificar que el mensaje se envió correctamente
                 if (outToServer.checkError()) {
-                    System.out.println("✗ Error al enviar identificación al servidor.");
+                    System.out.println("Error al enviar identificación al servidor.");
                     cliente.close();
                     throw new IOException("No se pudo enviar identificación");
                 }
@@ -54,7 +54,7 @@ public class ElectroValvula {
                 
                 // Detener el hilo anterior si existe y está vivo
                 if (electrovalvulaActual != null && electrovalvulaActual.isAlive()) {
-                    System.out.println("⚠ Deteniendo hilo anterior...");
+                    System.out.println("Deteniendo hilo anterior...");
                     electrovalvulaActual.apagar();
                     electrovalvulaActual.join(2000);
                 }
@@ -63,15 +63,15 @@ public class ElectroValvula {
                 electrovalvulaActual = new HiloSensadoElectrovalvula(cliente, outToServer);
                 electrovalvulaActual.start();
                 
-                System.out.println("✓ Reconexión exitosa. Electroválvula operativa.\n");
+                System.out.println("Reconexión exitosa. Electroválvula operativa.\n");
                 return;
                 
             } catch (ConnectException e) {
-                System.out.println("✗ Servidor no disponible: " + e.getMessage());
+                System.out.println("Servidor no disponible: " + e.getMessage());
             } catch (SocketTimeoutException e) {
-                System.out.println("✗ Timeout al conectar: " + e.getMessage());
+                System.out.println("Timeout al conectar: " + e.getMessage());
             } catch (IOException e) {
-                System.out.println("✗ Error de I/O: " + e.getMessage());
+                System.out.println("Error de I/O: " + e.getMessage());
                 Logger.getLogger(ElectroValvula.class.getName()).log(Level.WARNING, 
                     "Error en intento de reconexión #" + intentos, e);
             }
@@ -79,7 +79,7 @@ public class ElectroValvula {
             // Esperar antes de reintentar (backoff exponencial)
             if (sistemaActivo) {
                 int tiempoEspera = Math.min(TIEMPO_ESPERA_RECONEXION * (1 + intentos / 10), 30000);
-                System.out.println("⏳ Esperando " + (tiempoEspera/1000) + " segundos antes de reintentar...\n");
+                System.out.println("Esperando " + (tiempoEspera/1000) + " segundos antes de reintentar...\n");
                 Thread.sleep(tiempoEspera);
             }
         }
@@ -87,7 +87,7 @@ public class ElectroValvula {
         if (!sistemaActivo) {
             System.out.println("Sistema detenido por el usuario.");
         } else {
-            System.out.println("✗ No se pudo restablecer la conexión después de " + intentos + " intentos.");
+            System.out.println("No se pudo restablecer la conexión después de " + intentos + " intentos.");
         }
     }
     
@@ -101,14 +101,14 @@ public class ElectroValvula {
     public static void main(String[] args) {
         // Hook para manejar cierre graceful con Ctrl+C
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\n⚠ Señal de cierre recibida. Deteniendo sistema...");
+            System.out.println("\nSeñal de cierre recibida. Deteniendo sistema...");
             detenerSistema();
         }));
         
         try {
-            System.out.println("╔════════════════════════════════════════╗");
-            System.out.println("║    ELECTROVÁLVULA - INICIANDO         ║");
-            System.out.println("╚════════════════════════════════════════╝\n");
+            System.out.println("I-----------------------------------------I");
+            System.out.println("I    ELECTROVÁLVULA - INICIANDO           I");
+            System.out.println("I-----------------------------------------I\n");
             
             Socket cliente = new Socket();
             cliente.connect(new java.net.InetSocketAddress(
@@ -118,25 +118,25 @@ public class ElectroValvula {
             cliente.setSoTimeout(TIMEOUT_SOCKET);
             cliente.setTcpNoDelay(true);
             
-            System.out.println("✓ Cliente conectado: " + cliente);
+            System.out.println("Cliente conectado: " + cliente);
             
             PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
             outToServer.println("electroValvula1");
             outToServer.flush();
             
             if (outToServer.checkError()) {
-                System.out.println("✗ Error al enviar identificación inicial.");
+                System.out.println("Error al enviar identificación inicial.");
                 throw new IOException("Error en identificación inicial");
             }
             
-            System.out.println("✓ Identificación enviada");
-            System.out.println("✓ Sistema operativo\n");
+            System.out.println("Identificación enviada");
+            System.out.println("Sistema operativo\n");
             
             electrovalvulaActual = new HiloSensadoElectrovalvula(cliente, outToServer);
             electrovalvulaActual.start();
             
         } catch (ConnectException ex) {
-            System.out.println("✗ No se pudo conectar al servidor: " + ex.getMessage());
+            System.out.println("No se pudo conectar al servidor: " + ex.getMessage());
             System.out.println("Iniciando modo de reconexión automática...\n");
             try {
                 restablecerConexion();
@@ -144,14 +144,14 @@ public class ElectroValvula {
                 Logger.getLogger(ElectroValvula.class.getName()).log(Level.SEVERE, null, e);
             }
         } catch (SocketTimeoutException ex) {
-            System.out.println("✗ Timeout en conexión inicial: " + ex.getMessage());
+            System.out.println("Timeout en conexión inicial: " + ex.getMessage());
             try {
                 restablecerConexion();
             } catch (InterruptedException e) {
                 Logger.getLogger(ElectroValvula.class.getName()).log(Level.SEVERE, null, e);
             }
         } catch (IOException ex) {
-            System.out.println("✗ Error en la conexión inicial: " + ex.getMessage());
+            System.out.println("Error en la conexión inicial: " + ex.getMessage());
             Logger.getLogger(ElectroValvula.class.getName()).log(Level.SEVERE, null, ex);
             try {
                 restablecerConexion();

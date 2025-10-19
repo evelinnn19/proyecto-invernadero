@@ -114,7 +114,7 @@ public class HiloSensadoElectrovalvula extends Thread {
             // Iniciar el monitor de conexión en paralelo
             iniciarMonitorConexion();
             
-            System.out.println("✓ Electroválvula lista para recibir comandos.");
+            System.out.println("Electroválvula lista para recibir comandos.");
             
             while (prendido) {
                 // Verificar conexión antes de intentar leer

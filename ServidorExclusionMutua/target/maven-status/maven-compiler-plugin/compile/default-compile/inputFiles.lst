@@ -1,5 +1,8 @@
-D:\OneDrive\Sistemas Operativos Distribuidos\2025\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IDetectorFalla.java
-D:\OneDrive\Sistemas Operativos Distribuidos\2025\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\AveriguarEstado.java
-D:\OneDrive\Sistemas Operativos Distribuidos\2025\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ControlRespuesta.java
-D:\OneDrive\Sistemas Operativos Distribuidos\2025\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\DetectorFallo.java
-D:\OneDrive\Sistemas Operativos Distribuidos\2025\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServidorExclusionMutua.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ControlRespuesta.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IServicioExclusionMutua.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\DetectorFallo.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServerExclusionMutuaRMI.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IDetectorFalla.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\AveriguarEstado.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServidorExclusionMutua.java
+D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IClienteEM.java

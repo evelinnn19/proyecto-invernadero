@@ -61,7 +61,7 @@ public class MonitorElectrovalvulaSimple extends Thread {
                     // Procesar mensajes opcionales del cliente (ACK, PING, etc.)
                     if (mensaje.equals("PING")) {
                         // La válvula envía PING para mantener conexión activa
-                        System.out.println("Heartbeat recibido de " + nombreValvula);
+                        //System.out.println("Heartbeat recibido de " + nombreValvula);
                     } else if (mensaje.startsWith("ACK_")) {
                         System.out.println( nombreValvula + " confirmó: " + mensaje);
                     } else if (!mensaje.isEmpty()) {

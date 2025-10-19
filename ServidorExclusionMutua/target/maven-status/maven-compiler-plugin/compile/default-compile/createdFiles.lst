@@ -1,5 +1,5 @@
 com\sistdist\servidorexclusionmutua\DetectorFallo.class
+com\sistdist\servidorexclusionmutua\ControlRespuesta.class
 com\sistdist\servidorexclusionmutua\AveriguarEstado.class
 com\sistdist\servidorexclusionmutua\ServidorExclusionMutua.class
-com\sistdist\servidorexclusionmutua\ControlRespuesta.class
 com\sistdist\interfaces\IDetectorFalla.class

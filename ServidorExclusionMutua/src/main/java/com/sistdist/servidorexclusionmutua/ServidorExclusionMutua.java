@@ -46,7 +46,7 @@ public class ServidorExclusionMutua {
             ServerExclusionMutuaRMI serverEM = new ServerExclusionMutuaRMI();
             
             Naming.rebind("rmi://localhost:" + nroPuertoExcMutua  + "/servidorCentralEM", (IServicioExclusionMutua) serverEM);
-            
+            System.out.println("Finalizacion de configuracion.");
         } catch (RemoteException ex) {
             Logger.getLogger(ServidorExclusionMutua.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
