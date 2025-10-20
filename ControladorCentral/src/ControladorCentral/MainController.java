@@ -48,41 +48,67 @@ public class MainController {
     // Lógica original, factorizada para reutilizar
     private static void iniciarConServerSocket(ServerSocket server) throws IOException {
         try {
+            // Objeto único DatosINR
             Impresor impresor = new Impresor();
+            
             DatosINR datos = new DatosINR();
             datos.setImp(impresor);
             impresor.start();
-
+            
             CoordinadorBomba coordinador = new CoordinadorBomba();
             coordinador.setImp(impresor);
-
-            System.out.println("Inicio del Invernadero.");
-            System.out.println("Socket de conexion iniciado (puerto " + server.getLocalPort() + ").");
-
-            // Conexión al servidor de exclusión mutua (RMI)
-            RMIClienteBomba clienteRMI;
-            while (true) {
+            
+            System.out.println("Inicio del Sistema de Control de Invernadero");
+            
+            server = new ServerSocket(20000);
+            System.out.println("Socket de conexión iniciado en puerto 20000");
+            
+            // 🆕 Intentar conectar con cliente RMI con failover
+            RMIClienteBomba clienteRMI = null;
+            int intentosConexionRMI = 0;
+            final int MAX_INTENTOS = 10;
+            
+            while (clienteRMI == null && intentosConexionRMI < MAX_INTENTOS) {
                 try {
-                    clienteRMI = new RMIClienteBomba("rmi://localhost:10000/servidorCentralEM");
+                    clienteRMI = new RMIClienteBomba();
                     coordinador.setRmiCliente(clienteRMI);
-                    System.out.println("Cliente RMI inicializado y conectado al servidor");
+                    System.out.println("Cliente RMI con failover inicializado");
+                    System.out.println("Conectado a: " + clienteRMI.getServidorActual());
                     break;
+                    
                 } catch (RemoteException | MalformedURLException | NotBoundException ex) {
-                    // reintento discreto
-                    try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
+                    intentosConexionRMI++;
+                    System.err.println("Intento " + intentosConexionRMI + "/" + MAX_INTENTOS + 
+                                     " - Error al conectar con servidor RMI: " + ex.getMessage());
+                    
+                    if (intentosConexionRMI < MAX_INTENTOS) {
+                        System.out.println("Reintentando en 3 segundos...");
+                        Thread.sleep(3000);
+                    } else {
+                        System.err.println("No se pudo conectar con ningún servidor RMI después de " + 
+                                         MAX_INTENTOS + " intentos");
+                        System.err.println("El sistema continuará sin exclusión mutua (modo degradado)");
+                    }
                 }
             }
-
-            // Loop de aceptación
+            
+            // Bucle principal de aceptación de clientes
+            System.out.println("Sistema listo - Esperando conexiones...\n");
+            
             while (true) {
-                System.out.println("Esperando a una conexion.");
                 Socket s = server.accept();
-                System.out.println("Se detecto una conexion. --->   " + s);
+                System.out.println("Nueva conexión detectada: " + s.getInetAddress().getHostAddress());
+                
                 HiloManejoCliente cliente = new HiloManejoCliente(s, datos, coordinador, impresor);
                 cliente.start();
             }
-        } catch (RuntimeException e) {
-            throw e;
+            
+        } catch (IOException ex) {
+            System.err.println("❌ Error crítico en el servidor: " + ex.getMessage());
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            System.err.println("⚠️ Hilo principal interrumpido");
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

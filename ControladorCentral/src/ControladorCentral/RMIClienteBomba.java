@@ -8,52 +8,153 @@ import java.rmi.server.UnicastRemoteObject;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Cliente RMI usado por el CoordinadorBomba para solicitar/soltar el recurso (bomba).
  */
 public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
 
-   private IServicioExclusionMutua servicio; // stub remoto
+  private IServicioExclusionMutua servicio; // stub remoto actual
     private final Semaphore sem = new Semaphore(0); // inicio 0: bloqueado
+    
+    // URLs de los servidores
+    private final String urlMaestro = "rmi://localhost:10000/servidorCentralEM";
+    private final String urlRespaldo = "rmi://localhost:10001/servidorCentralEM";
+    private boolean usandoMaestro = true;
+    
+    private static final int MAX_REINTENTOS = 3;
 
-    public RMIClienteBomba(String servidorUrl) throws RemoteException, MalformedURLException, NotBoundException {
+    public RMIClienteBomba() throws RemoteException, MalformedURLException, NotBoundException {
         super();
-        // Ej: servidorUrl = "rmi://localhost:10000/servidorCentralEM"
-        servicio = (IServicioExclusionMutua) Naming.lookup(servidorUrl);
+        conectarConFailover();
     }
 
     /**
-     * Llamar antes de entrar en sección crítica (antes de abrir electrovalvula general o asignar bomba).Bloquea hasta que RecibirToken sea invocado por el servidor.
-     * @throws java.rmi.RemoteException
-     * @throws java.lang.InterruptedException
+     * Intenta conectar al maestro, si falla intenta con el respaldo.
+     */
+    private void conectarConFailover() throws RemoteException, MalformedURLException, NotBoundException {
+        try {
+            System.out.println("🔄 Intentando conectar con servidor maestro...");
+            servicio = (IServicioExclusionMutua) Naming.lookup(urlMaestro);
+            usandoMaestro = true;
+            System.out.println("✅ Conectado al servidor MAESTRO (puerto 10000)");
+            
+        } catch (Exception e) {
+            System.out.println("⚠️ Maestro no disponible, intentando con respaldo...");
+            
+            try {
+                servicio = (IServicioExclusionMutua) Naming.lookup(urlRespaldo);
+                usandoMaestro = false;
+                System.out.println("✅ Conectado al servidor RESPALDO (puerto 10001)");
+                
+            } catch (Exception ex) {
+                System.err.println("❌ Ni maestro ni respaldo disponibles");
+                throw new RemoteException("No hay servidores disponibles", ex);
+            }
+        }
+    }
+
+    /**
+     * Intenta cambiar al otro servidor si el actual falla.
+     */
+    private boolean intentarFailover() {
+        try {
+            String urlAlternativa = usandoMaestro ? urlRespaldo : urlMaestro;
+            String nombreServidor = usandoMaestro ? "RESPALDO" : "MAESTRO";
+            
+            System.out.println("🔄 Intentando failover a servidor " + nombreServidor + "...");
+            
+            servicio = (IServicioExclusionMutua) Naming.lookup(urlAlternativa);
+            usandoMaestro = !usandoMaestro;
+            
+            System.out.println("✅ Failover exitoso - Conectado a " + nombreServidor);
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Failover falló: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Solicitar recurso con reintentos y failover automático.
      */
     public void solicitarRecurso() throws RemoteException, InterruptedException {
-         servicio.ObtenerRecurso(this);
-        sem.acquire(); // espera hasta que RecibirToken haga release()
+        int intentos = 0;
+        
+        while (intentos < MAX_REINTENTOS) {
+            try {
+                servicio.ObtenerRecurso(this);
+                sem.acquire(); // Espera hasta que RecibirToken haga release()
+                return; // Éxito
+                
+            } catch (RemoteException ex) {
+                intentos++;
+                System.err.println("⚠️ Error al solicitar recurso (intento " + intentos + "/" + MAX_REINTENTOS + "): " + ex.getMessage());
+                
+                if (intentos < MAX_REINTENTOS) {
+                    // Intentar failover
+                    if (intentarFailover()) {
+                        // Reintentar con el nuevo servidor
+                        continue;
+                    } else {
+                        // Esperar antes de reintentar
+                        Thread.sleep(2000);
+                    }
+                } else {
+                    throw new RemoteException("No se pudo obtener recurso después de " + MAX_REINTENTOS + " intentos", ex);
+                }
+            }
+        }
     }
 
     /**
-     * Llamar al salir de la sección crítica.
-     * @throws java.rmi.RemoteException
-     * @throws java.lang.InterruptedException
+     * Devolver recurso con reintentos.
      */
     public void devolverRecurso() throws RemoteException, InterruptedException {
-        servicio.DevolverRecurso();
-        System.out.println("RMIClienteBomba: Recurso devuelto al servidor de exclusión mutua.");
-       
+        int intentos = 0;
+        
+        while (intentos < MAX_REINTENTOS) {
+            try {
+                servicio.DevolverRecurso();
+                System.out.println("✅ Recurso devuelto exitosamente");
+                return;
+                
+            } catch (RemoteException ex) {
+                intentos++;
+                System.err.println("⚠️ Error al devolver recurso (intento " + intentos + "/" + MAX_REINTENTOS + "): " + ex.getMessage());
+                
+                if (intentos < MAX_REINTENTOS) {
+                    // Intentar failover
+                    if (intentarFailover()) {
+                        continue;
+                    } else {
+                        Thread.sleep(2000);
+                    }
+                } else {
+                    throw new RemoteException("No se pudo devolver recurso después de " + MAX_REINTENTOS + " intentos", ex);
+                }
+            }
+        }
     }
-    
-    
 
     /**
-     * Callback invocado remotamente por el servidor cuando el token está disponible.Desbloquea al hilo que esperaba.
-     * @throws java.rmi.RemoteException
+     * Callback invocado remotamente por el servidor cuando el token está disponible.
      */
     @Override
     public void RecibirToken() throws RemoteException {
-        if (sem.availablePermits() == 0) sem.release(); // evita acumulación
-        System.out.println("RMIClienteBomba: Recibí el token del servidor de exclusión mutua.");
+        if (sem.availablePermits() == 0) {
+            sem.release(); // Evita acumulación
+        }
+        System.out.println("🔑 Token recibido del servidor de exclusión mutua");
+    }
+    
+    /**
+     * Obtiene el nombre del servidor actual (para debugging).
+     */
+    public String getServidorActual() {
+        return usandoMaestro ? "MAESTRO (10000)" : "RESPALDO (10001)";
     }
 }

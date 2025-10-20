@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>22</maven.compiler.release>
-        <exec.mainClass>com.mycompany.sensortemperatura.sensorLluvia</exec.mainClass>
+        <exec.mainClass>com.mycompany.sensorlluvia.SensorLluvia</exec.mainClass>
     </properties>
 
     <build>
@@ -36,7 +36,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.mycompany.sensortemperatura.sensorLluvia</mainClass>
+                            <mainClass>com.mycompany.sensorlluvia.SensorLluvia</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

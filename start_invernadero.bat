@@ -1,6 +1,6 @@
 @echo off
 rem === Configurar entorno Java ===
-set "JAVA_HOME=C:\Program Files\Java\jdk-22"
+set "JAVA_HOME=C:\Program Files\Java\jdk-24"
 set "PATH=%JAVA_HOME%\bin;%PATH%"
 
 title  Sistemas Operativos Distribuidos - Invernadero
@@ -40,9 +40,20 @@ REM === SERVIDOR DE EXCLUSION MUTUA (MAVEN) ===
 echo  Iniciando Servidor de Exclusion Mutua...
 cd ServidorExclusionMutua
 if exist "target" (
-    for %%f in (target\*.jar) do start "Servidor Exclusion Mutua" cmd /k "java -jar %%f"
+    for %%f in (target\*.jar) do start "Servidor Exclusion Mutua " cmd /k "java -jar %%f"
 ) else (
     start "Servidor Exclusion Mutua" cmd /k "java -jar dist\ServidorExclusionMutua.jar"
+)
+cd ..
+timeout /t 3 /nobreak >nul
+
+REM === SERVIDOR DE EXCLUSION MUTUA (MAVEN) ===
+echo  Iniciando Servidor de Exclusion Mutua backup...
+cd ServidorExclusionMutua
+if exist "target" (
+    for %%f in (target\*.jar) do start "Servidor Exclusion Mutua respaldo" cmd /k "java -jar %%f"
+) else (
+    start "Servidor Exclusion Mutua" cmd /k "java -jar dist\ServidorExclusionMutua.jar respaldo"
 )
 cd ..
 timeout /t 3 /nobreak >nul

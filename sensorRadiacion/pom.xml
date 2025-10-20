@@ -5,14 +5,14 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mycompany</groupId>
-    <artifactId>sensorRadiacion</artifactId>
+    <artifactId>sensorradiacion</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>22</maven.compiler.release>
-        <exec.mainClass>com.mycompany.sensortemperatura.ensorRadiacion</exec.mainClass>
+        <maven.compiler.release>24</maven.compiler.release>
+        <exec.mainClass>com.mycompany.sensorradiacion.SensorRadiacion</exec.mainClass>
     </properties>
 
     <build>
@@ -23,7 +23,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>22</release>
+                    <release>24</release>
                 </configuration>
             </plugin>
 
@@ -36,7 +36,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.mycompany.sensortemperatura.SensorRadiacion</mainClass>
+                            <mainClass>com.mycompany.sensorradiacion.SensorRadiacion</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
