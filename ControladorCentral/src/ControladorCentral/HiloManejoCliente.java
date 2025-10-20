@@ -41,9 +41,9 @@ public class HiloManejoCliente extends Thread {
     public void run() {
         try {
 
-            String tipoDispositivo = in.readLine().trim();
+            String tipoDispositivo = in.readLine();
             if (tipoDispositivo == null) {
-                System.out.println("Cliente se desconectó antes de identificarse");
+                System.out.println("Cliente se desconecto antes de identificarse");
                 cerrarConexion();
                 return;
             }
