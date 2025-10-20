@@ -21,6 +21,7 @@ public class HiloReceptorElectrovalvula extends Thread {
     private Impresor imp;
     private volatile boolean ejecutando;
     private Thread hiloMonitorConexion;
+    private Thread hiloHeartbeat; // 🆕
 
     public Impresor getImp() {
         return imp;
@@ -44,7 +45,7 @@ public class HiloReceptorElectrovalvula extends Thread {
             
             // Configurar socket para detectar desconexiones
             cliente.setKeepAlive(true);
-            cliente.setSoTimeout(20000); // 20 segundos timeout
+            cliente.setSoTimeout(60000); // 🔧 60 segundos (enviaremos PING cada 15s)
             cliente.setTcpNoDelay(true);
             
         } catch (IOException e) {
@@ -72,6 +73,35 @@ public class HiloReceptorElectrovalvula extends Thread {
             }
         }
         return 0;
+    }
+
+    // 🆕 Hilo que envía PING periódicamente
+    private void iniciarHeartbeat() {
+        hiloHeartbeat = new Thread(() -> {
+            try {
+                while (ejecutando && !Thread.currentThread().isInterrupted()) {
+                    Thread.sleep(15000); // Cada 15 segundos
+                    
+                    if (ejecutando && !verificarEstadoSocket()) {
+                        out.println("PING");
+                        out.flush();
+                        
+                        if (out.checkError()) {
+                            System.out.println("Error al enviar PING - Parcela " + parcela);
+                            manejarDesconexion();
+                            break;
+                        }
+                        
+                        System.out.println("Heartbeat enviado a parcela " + parcela);
+                    }
+                }
+            } catch (InterruptedException e) {
+                System.out.println("Heartbeat interrumpido - Parcela " + parcela);
+            }
+        });
+        
+        hiloHeartbeat.setDaemon(true);
+        hiloHeartbeat.start();
     }
 
     // Monitor que escucha mensajes entrantes del cliente (PING, ACK, etc.)
@@ -114,8 +144,6 @@ public class HiloReceptorElectrovalvula extends Thread {
     }
 
     private void procesarMensaje(String mensaje) {
-        //System.out.println("Mensaje recibido de parcela " + parcela + ": " + mensaje);
-        
         if (mensaje.equals("PING")) {
             // Responder al heartbeat del cliente
             out.println("PONG");
@@ -124,6 +152,8 @@ public class HiloReceptorElectrovalvula extends Thread {
             if (out.checkError()) {
                 System.out.println("Error al enviar PONG - Parcela " + parcela);
                 manejarDesconexion();
+            } else {
+                System.out.println("?PONG enviado a parcela " + parcela);
             }
             
         } else if (mensaje.startsWith("ACK_")) {
@@ -194,16 +224,21 @@ public class HiloReceptorElectrovalvula extends Thread {
         if (hiloMonitorConexion != null) {
             hiloMonitorConexion.interrupt();
         }
+        if (hiloHeartbeat != null) {
+            hiloHeartbeat.interrupt();
+        }
         cerrarRecursos();
     }
 
     @Override
     public void run() {
         try {
+            // 🆕 Iniciar heartbeat
+            iniciarHeartbeat();
             // Iniciar el monitor de mensajes entrantes
             iniciarMonitorMensajes();
             
-            System.out.println("Servidor listo para controlar parcela " + parcela);
+            System.out.println("Servidor listo para controlar parcela " + parcela + " (con heartbeat)");
             
             int tiempo;
             
@@ -221,6 +256,7 @@ public class HiloReceptorElectrovalvula extends Thread {
                             imp.setTiempos(this.parcela, 0);
                         }
                         System.out.println("Lloviendo - No se riega parcela " + parcela);
+                        out.println("OFF");
                         Thread.sleep(5000);
                         
                     } else {

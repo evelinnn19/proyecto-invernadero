@@ -23,6 +23,7 @@ public class ControlRespuesta extends TimerTask {
         if (!detector.getNombre().equals("ServidorMaestro")) {
             detector.chequearRespuesta();
         }
+        
     }
     
 }

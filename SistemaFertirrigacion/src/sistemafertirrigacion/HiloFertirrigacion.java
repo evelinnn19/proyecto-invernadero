@@ -15,6 +15,7 @@ public class HiloFertirrigacion extends Thread {
     private Socket cliente;
     private volatile boolean ejecutando;
     private Thread hiloMonitorConexion;
+    private Thread hiloHeartbeat;
     
     public HiloFertirrigacion(Socket cliente, PrintWriter out) {
         this.cliente = cliente;
@@ -26,7 +27,7 @@ public class HiloFertirrigacion extends Thread {
             
             // Configurar socket para detectar desconexiones
             cliente.setKeepAlive(true);
-            cliente.setSoTimeout(15000); // 15 segundos timeout
+            cliente.setSoTimeout(60000); // 60 segundos timeout (más tiempo porque enviamos heartbeats)
             cliente.setTcpNoDelay(true);
             
         } catch (IOException ex) {
@@ -35,10 +36,42 @@ public class HiloFertirrigacion extends Thread {
         }
     }
     
+    // 🆕 Hilo que envía PING cada 10 segundos
+    private void iniciarHeartbeat() {
+        hiloHeartbeat = new Thread(() -> {
+            try {
+                while (ejecutando && !Thread.currentThread().isInterrupted()) {
+                    Thread.sleep(10000); // Cada 10 segundos
+                    
+                    if (ejecutando && !verificarEstadoSocket()) {
+                        out.println("PING");
+                        out.flush();
+                        
+                        if (out.checkError()) {
+                            System.out.println("Error al enviar PING - Servidor caído");
+                            manejarDesconexion();
+                            break;
+                        }
+                        
+                        System.out.println("Heartbeat enviado al servidor");
+                    }
+                }
+            } catch (InterruptedException e) {
+                System.out.println("Heartbeat interrumpido");
+            }
+        });
+        
+        hiloHeartbeat.setDaemon(true);
+        hiloHeartbeat.start();
+    }
+    
     public void detener() {
         ejecutando = false;
         if (hiloMonitorConexion != null) {
             hiloMonitorConexion.interrupt();
+        }
+        if (hiloHeartbeat != null) {
+            hiloHeartbeat.interrupt();
         }
     }
     
@@ -52,7 +85,7 @@ public class HiloFertirrigacion extends Thread {
                         manejarDesconexion();
                         break;
                     }
-                    Thread.sleep(2000); // Verificar cada 2 segundos
+                    Thread.sleep(5000); // Verificar cada 5 segundos
                 }
             } catch (InterruptedException e) {
                 System.out.println("Monitor de conexión interrumpido");
@@ -76,8 +109,6 @@ public class HiloFertirrigacion extends Thread {
     
     private void manejarDesconexion() {
         System.out.println("SERVIDOR DESCONECTADO");
-
-        
         ejecutando = false;
         cerrarRecursos();
         reconectar();
@@ -111,10 +142,11 @@ public class HiloFertirrigacion extends Thread {
     @Override
     public void run() {
         try {
-            // Iniciar monitor de conexión
+            // 🆕 Iniciar heartbeat
+            iniciarHeartbeat();
             iniciarMonitorConexion();
             
-            System.out.println("Sistema de Fertirrigación operativo");
+            System.out.println("Sistema de Fertirrigación operativo (con heartbeat)");
             
             while (ejecutando) {
                 // Verificar conexión antes de leer
@@ -125,14 +157,19 @@ public class HiloFertirrigacion extends Thread {
                 }
                 
                 try {
-                    // Leer orden del servidor (bloqueante)
+                    // Leer orden del servidor (puede ser tiempo o PONG)
                     String orden = in.readLine();
                     
-                    // Si readLine() retorna null = servidor cerró la conexión
                     if (orden == null) {
                         System.out.println("Servidor cerró la conexión (orden null)");
                         manejarDesconexion();
                         break;
+                    }
+                    
+                    // Ignorar respuestas PONG del servidor
+                    if (orden.equals("PONG")) {
+                        System.out.println("PONG recibido del servidor");
+                        continue;
                     }
                     
                     // Parsear tiempo de fertirrigación
@@ -148,7 +185,6 @@ public class HiloFertirrigacion extends Thread {
                     out.println("FERTI_OK");
                     out.flush();
                     
-                    // Verificar si hubo error al enviar
                     if (out.checkError()) {
                         System.out.println("Error al enviar confirmación. Servidor caído.");
                         manejarDesconexion();
@@ -156,10 +192,7 @@ public class HiloFertirrigacion extends Thread {
                     }
                     
                 } catch (NumberFormatException nfe) {
-                    System.out.println("Tiempo de fertirrigación inválido: " + nfe.getMessage());
-                    // Enviar error al servidor
-                    out.println("ERROR:INVALID_TIME");
-                    out.flush();
+                    System.out.println("⚠️ Mensaje no numérico recibido (puede ser comando): " + nfe.getMessage());
                     
                 } catch (SocketException se) {
                     System.out.println("SocketException: Conexión perdida.");

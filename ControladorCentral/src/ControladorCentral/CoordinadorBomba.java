@@ -14,7 +14,7 @@ public class CoordinadorBomba {
     private boolean fertirrigando = false;
     private boolean riegoGeneral = false;
     private PrintWriter outGeneral; // para enviar a EV2
-    private PrintWriter outferti;
+    private PrintWriter outferti;   // para enviar a EV1
 
     private volatile Impresor imp;
     private final ReentrantLock lock = new ReentrantLock();
@@ -43,14 +43,17 @@ public class CoordinadorBomba {
 
         lock.lock();
         try {
+            // Esperar si hay fertirrigación activa
             while (fertirrigando) {
+                System.out.println("⏳ Parcela " + parcela + " esperando (fertirrigación activa)");
                 puedeRegar.await();
             }
 
             valvulasRiegoActivas++;
-            System.out.println("Se inicio el riego en parcela " + parcela);
-            System.out.println(valvulasRiegoActivas + " Valvulas de riego activas");
+            System.out.println("✅ Se inició el riego en parcela " + parcela);
+            System.out.println("📊 " + valvulasRiegoActivas + " válvula(s) de riego activas");
 
+            // Verificar si necesitamos abrir la válvula general
             if (valvulasRiegoActivas == 1 && !riegoGeneral) {
                 needOpenGeneral = true;
             }
@@ -58,34 +61,58 @@ public class CoordinadorBomba {
             lock.unlock();
         }
 
+        // 🔧 FUERA DEL LOCK: Solicitar recurso RMI y abrir válvula general
         if (needOpenGeneral) {
-            boolean ok = false;
+            boolean recursoObtenido = false;
+            
             try {
                 if (rmiCliente != null) {
-                    // idealmente rmiCliente.solicitarRecurso(timeout) para no bloquear indefinidamente
+                    System.out.println("🔄 Solicitando recurso RMI para riego general...");
                     rmiCliente.solicitarRecurso();
-                    ok = true;
+                    recursoObtenido = true;
+                    System.out.println("✅ Recurso RMI obtenido");
                 } else {
-                    System.err.println("RMI Cliente no configurado al iniciar riego general");
+                    System.err.println("❌ RMI Cliente no configurado al iniciar riego general");
                 }
             } catch (RemoteException rex) {
-                System.err.println("RMI no disponible al abrir general: " + rex.getMessage());
+                System.err.println("❌ RMI no disponible al abrir general: " + rex.getMessage());
+                recursoObtenido = false;
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                System.err.println("Interrumpido al solicitar recurso RMI para riego general");
+                System.err.println("⚠️ Interrumpido al solicitar recurso RMI para riego general");
+                throw ie;
             }
 
+            // 🔧 VOLVER AL LOCK: Actualizar estado y abrir válvula
             lock.lock();
             try {
-                if (ok) {
+                if (recursoObtenido) {
                     riegoGeneral = true;
-                    imp.setRiegoGeneral(riegoGeneral);
-                    System.out.println("Electrovalvula2 abierta (riego general)");
-                    if (outGeneral != null) outGeneral.println("ON");
+                    
+                    // 🎯 CRÍTICO: Abrir la válvula general (EV2)
+                    if (outGeneral != null) {
+                        outGeneral.println("ON");
+                        outGeneral.flush();
+                        
+                        if (outGeneral.checkError()) {
+                            System.err.println("❌ Error al enviar ON a válvula general");
+                        } else {
+                            System.out.println("💧 Electroválvula2 ABIERTA (riego general)");
+                        }
+                    } else {
+                        System.err.println("⚠️ outGeneral es NULL - Válvula no conectada");
+                    }
+                    
+                    // Actualizar impresor
+                    if (imp != null) {
+                        imp.setRiegoGeneral(riegoGeneral);
+                    }
                 } else {
-                    // revertir incremento porque no logramos abrir la general
+                    // No pudimos obtener el recurso, revertir
                     valvulasRiegoActivas--;
-                    System.err.println("No se pudo abrir electrovalvula general: revertido estado.");
+                    System.err.println("❌ No se pudo abrir electroválvula general: revertido estado.");
+                    System.err.println("📊 Válvulas activas revertidas a: " + valvulasRiegoActivas);
+                    
                     if (valvulasRiegoActivas == 0) {
                         puedeFertirregar.signalAll();
                     }
@@ -96,24 +123,27 @@ public class CoordinadorBomba {
         }
     }
 
-    // Comunicación valvula general
+    // Comunicación válvula general
     public void setElectrovalvulaGeneral(Socket cliente) {
         lock.lock();
         try {
-            this.outGeneral = new PrintWriter(cliente.getOutputStream(),true);
+            this.outGeneral = new PrintWriter(cliente.getOutputStream(), true);
+            System.out.println("✅ PrintWriter para Electroválvula General (EV2) configurado");
         } catch (IOException e) {
-            System.err.println("Error al obtener outputStream de electrovalvula general: " + e.getMessage());
+            System.err.println("❌ Error al obtener outputStream de electroválvula general: " + e.getMessage());
         } finally {
             lock.unlock();
         }
     }
 
-    // Comunicación Valvula Ferti
+    // Comunicación Válvula Ferti
     public void setElectroValvulaFerti(Socket cliente) {
         lock.lock();
         try {
-            this.outferti = new PrintWriter(cliente.getOutputStream(),true);
+            this.outferti = new PrintWriter(cliente.getOutputStream(), true);
+            System.out.println("✅ PrintWriter para Electroválvula Ferti (EV1) configurado");
         } catch (IOException ex) {
+            System.err.println("❌ Error al configurar válvula ferti: " + ex.getMessage());
             Logger.getLogger(CoordinadorBomba.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             lock.unlock();
@@ -128,9 +158,11 @@ public class CoordinadorBomba {
         try {
             valvulasRiegoActivas--;
             if (valvulasRiegoActivas < 0) valvulasRiegoActivas = 0;
-            System.out.println("La parcela " + parcela + " termino el riego");
-            System.out.println(valvulasRiegoActivas + " Valvulas de riego activas");
+            
+            System.out.println("🛑 La parcela " + parcela + " terminó el riego");
+            System.out.println("📊 " + valvulasRiegoActivas + " válvula(s) de riego activas");
 
+            // Si ya no hay válvulas activas, cerrar la general
             if (valvulasRiegoActivas == 0 && riegoGeneral) {
                 needCloseGeneral = true;
             }
@@ -138,23 +170,47 @@ public class CoordinadorBomba {
             lock.unlock();
         }
 
+        // 🔧 FUERA DEL LOCK: Devolver recurso RMI
         if (needCloseGeneral) {
-            // cerrar general fuera del lock
             try {
-                if (rmiCliente != null) rmiCliente.devolverRecurso();
-                else System.err.println("RMI Cliente no configurado al cerrar riego general");
+                if (rmiCliente != null) {
+                    System.out.println("🔄 Devolviendo recurso RMI...");
+                    rmiCliente.devolverRecurso();
+                    System.out.println("✅ Recurso RMI devuelto");
+                } else {
+                    System.err.println("❌ RMI Cliente no configurado al cerrar riego general");
+                }
             } catch (RemoteException rex) {
-                System.err.println("Error RMI al devolver recurso: " + rex.getMessage());
+                System.err.println("❌ Error RMI al devolver recurso: " + rex.getMessage());
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                System.err.println("Interrumpido al devolver recurso RMI para riego general");
+                System.err.println("⚠️ Interrumpido al devolver recurso RMI para riego general");
             }
 
+            // 🔧 VOLVER AL LOCK: Cerrar válvula y actualizar estado
             lock.lock();
             try {
                 riegoGeneral = false;
-                imp.setRiegoGeneral(riegoGeneral);
-                if (outGeneral != null) outGeneral.println("OFF");
+                
+                // 🎯 CRÍTICO: Cerrar la válvula general (EV2)
+                if (outGeneral != null) {
+                    outGeneral.println("OFF");
+                    outGeneral.flush();
+                    
+                    if (outGeneral.checkError()) {
+                        System.err.println("❌ Error al enviar OFF a válvula general");
+                    } else {
+                        System.out.println("💧 Electroválvula2 CERRADA");
+                    }
+                } else {
+                    System.err.println("⚠️ outGeneral es NULL al cerrar");
+                }
+                
+                // Actualizar impresor
+                if (imp != null) {
+                    imp.setRiegoGeneral(riegoGeneral);
+                }
+                
                 // Notifica que se puede iniciar fertirrigación
                 puedeFertirregar.signalAll();
             } finally {
@@ -167,74 +223,120 @@ public class CoordinadorBomba {
     public void iniciarFertirrigacion() throws InterruptedException {
         lock.lock();
         try {
+            // Esperar mientras haya riego activo
             while (valvulasRiegoActivas > 0 || riegoGeneral) {
-                System.out.println("Fertirrigacion en espera...");
+                System.out.println("⏳ Fertirrigación en espera (riego activo)...");
                 puedeFertirregar.await();
             }
         } finally {
             lock.unlock();
         }
 
-        boolean ok = false;
+        // 🔧 FUERA DEL LOCK: Solicitar recurso RMI
+        boolean recursoObtenido = false;
         try {
             if (rmiCliente != null) {
+                System.out.println("🔄 Solicitando recurso RMI para fertirrigación...");
                 rmiCliente.solicitarRecurso();
-                ok = true;
+                recursoObtenido = true;
+                System.out.println("✅ Recurso RMI obtenido para fertirrigación");
             } else {
-                System.err.println("RMI no configurado");
+                System.err.println("❌ RMI no configurado para fertirrigación");
             }
         } catch (RemoteException ex) {
-            System.err.println("Error RMI al solicitar recurso para fertirrigación: " + ex.getMessage());
+            System.err.println("❌ Error RMI al solicitar recurso para fertirrigación: " + ex.getMessage());
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw ie;
         }
 
-        if (ok) {
+        // 🔧 VOLVER AL LOCK: Abrir válvula ferti
+        if (recursoObtenido) {
             lock.lock();
             try {
                 fertirrigando = true;
-                imp.setFertirrigacion(fertirrigando);
-                imp.setTiempos(1, 0);
-                imp.setTiempos(2, 0);
-                imp.setTiempos(3, 0);
-                imp.setTiempos(4, 0);
-                imp.setTiempos(5, 0);
                 
-                if (outferti != null) outferti.println("ON");
+                // 🎯 CRÍTICO: Abrir la válvula de fertirrigación (EV1)
+                if (outferti != null) {
+                    outferti.println("ON");
+                    outferti.flush();
+                    
+                    if (outferti.checkError()) {
+                        System.err.println("❌ Error al enviar ON a válvula ferti");
+                    } else {
+                        System.out.println("🌿 Electroválvula1 ABIERTA (fertirrigación)");
+                    }
+                } else {
+                    System.err.println("⚠️ outferti es NULL - Válvula no conectada");
+                }
+                
+                // Actualizar impresor
+                if (imp != null) {
+                    imp.setFertirrigacion(fertirrigando);
+                    imp.setTiempos(1, 0);
+                    imp.setTiempos(2, 0);
+                    imp.setTiempos(3, 0);
+                    imp.setTiempos(4, 0);
+                    imp.setTiempos(5, 0);
+                }
             } finally {
                 lock.unlock();
             }
         } else {
-            System.err.println("No se pudo iniciar fertirrigación por fallo RMI.");
+            System.err.println("❌ No se pudo iniciar fertirrigación por fallo RMI.");
         }
     }
 
     // Termina fertirrigación
     public void terminaFertirrigacion() {
-        // devolver recurso fuera del lock
+        // 🔧 FUERA DEL LOCK: Devolver recurso RMI
         try {
-            if (rmiCliente != null) rmiCliente.devolverRecurso();
-            else System.err.println("RMI no configurado al terminar fertirrigacion");
+            if (rmiCliente != null) {
+                System.out.println("🔄 Devolviendo recurso RMI de fertirrigación...");
+                rmiCliente.devolverRecurso();
+                System.out.println("✅ Recurso RMI devuelto");
+            } else {
+                System.err.println("❌ RMI no configurado al terminar fertirrigacion");
+            }
         } catch (RemoteException rex) {
-            System.err.println("Error RMI al devolver recurso: " + rex.getMessage());
+            System.err.println("❌ Error RMI al devolver recurso: " + rex.getMessage());
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            System.err.println("Interrumpido al devolver recurso de fertirrigacion");
+            System.err.println("⚠️ Interrumpido al devolver recurso de fertirrigacion");
         }
 
+        // 🔧 VOLVER AL LOCK: Cerrar válvula
         lock.lock();
         try {
             fertirrigando = false;
-            if (imp != null) imp.setFertirrigacion(fertirrigando);
-            System.out.println("Fertirrigacion terminada");
-            if (outferti != null) outferti.println("OFF");
-            puedeRegar.signalAll(); // Notifica que se puede iniciar riego
+            
+            // 🎯 CRÍTICO: Cerrar la válvula de fertirrigación (EV1)
+            if (outferti != null) {
+                outferti.println("OFF");
+                outferti.flush();
+                
+                if (outferti.checkError()) {
+                    System.err.println("❌Error al enviar OFF a válvula ferti");
+                } else {
+                    System.out.println("🌿 Electroválvula1 CERRADA");
+                }
+            } else {
+                System.err.println("⚠️ outferti es NULL al cerrar");
+            }
+            
+            // Actualizar impresor
+            if (imp != null) {
+                imp.setFertirrigacion(fertirrigando);
+            }
+            
+            System.out.println("✅ Fertirrigación terminada");
+            
+            // Notificar que se puede iniciar riego
+            puedeRegar.signalAll();
         } finally {
             lock.unlock();
         }
     }
-    
     
     public void notificarDesconexionValvulaGeneral() throws InterruptedException {
         lock.lock();
@@ -259,23 +361,23 @@ public class CoordinadorBomba {
                     imp.setRiegoGeneral(false);
                 }
                 
-                // Devolver recurso RMI
-                try {
-                    if (rmiCliente != null) {
-                        rmiCliente.devolverRecurso();
-                    }
-                } catch (RemoteException e) {
-                    System.err.println("Error al devolver recurso RMI: " + e.getMessage());
-                }
-                
                 puedeFertirregar.signalAll();
             }
         } finally {
             lock.unlock();
         }
+        
+        // Devolver recurso RMI fuera del lock
+        if (riegoGeneral) {
+            try {
+                if (rmiCliente != null) {
+                    rmiCliente.devolverRecurso();
+                }
+            } catch (RemoteException e) {
+                System.err.println("Error al devolver recurso RMI: " + e.getMessage());
+            }
+        }
     }
-    
-    
     
     public void notificarDesconexionValvulaFerti() throws InterruptedException {
         lock.lock();
@@ -294,23 +396,26 @@ public class CoordinadorBomba {
             if (fertirrigando) {
                 System.out.println("⚠️ Terminando fertirrigación por desconexión de válvula");
                 fertirrigando = false;
+                
                 if (imp != null) {
                     imp.setFertirrigacion(false);
-                }
-                
-                // Devolver recurso RMI
-                try {
-                    if (rmiCliente != null) {
-                        rmiCliente.devolverRecurso();
-                    }
-                } catch (RemoteException e) {
-                    System.err.println("Error al devolver recurso RMI: " + e.getMessage());
                 }
                 
                 puedeRegar.signalAll();
             }
         } finally {
             lock.unlock();
+        }
+        
+        // Devolver recurso RMI fuera del lock
+        if (fertirrigando) {
+            try {
+                if (rmiCliente != null) {
+                    rmiCliente.devolverRecurso();
+                }
+            } catch (RemoteException e) {
+                System.err.println("Error al devolver recurso RMI: " + e.getMessage());
+            }
         }
     }
 }

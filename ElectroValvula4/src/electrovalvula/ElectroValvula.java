@@ -121,7 +121,7 @@ public class ElectroValvula {
             System.out.println("Cliente conectado: " + cliente);
             
             PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
-            outToServer.println("electroValvula1");
+            outToServer.println("electroValvula4");
             outToServer.flush();
             
             if (outToServer.checkError()) {

@@ -31,7 +31,7 @@ public class HiloReceptorFertirrigacion extends Thread {
             
             // Configurar socket para detectar desconexiones
             cliente.setKeepAlive(true);
-            cliente.setSoTimeout(20000); // 20 segundos timeout
+            cliente.setSoTimeout(60000); // 🔧 60 segundos (el cliente envía PING cada 10s)
             cliente.setTcpNoDelay(true);
             
         } catch (IOException e) {
@@ -45,12 +45,6 @@ public class HiloReceptorFertirrigacion extends Thread {
         hiloMonitorConexion = new Thread(() -> {
             try {
                 while (ejecutando && !Thread.currentThread().isInterrupted()) {
-                    // Verificar si hay datos disponibles para leer sin bloquear el hilo principal
-                    if (br.ready()) {
-                        // El hilo principal ya está leyendo, no hacemos nada aquí
-                        // Solo verificamos el estado del socket
-                    }
-                    
                     // Verificar estado del socket
                     if (verificarEstadoSocket()) {
                         System.out.println("Socket cerrado - Sistema Fertirrigación");
@@ -58,11 +52,8 @@ public class HiloReceptorFertirrigacion extends Thread {
                         break;
                     }
                     
-                    Thread.sleep(1000); // Verificar cada segundo
+                    Thread.sleep(5000); // Verificar cada 5 segundos
                 }
-            } catch (IOException e) {
-                System.out.println("Error de I/O en monitor fertirrigación: " + e.getMessage());
-                manejarDesconexion();
             } catch (InterruptedException e) {
                 System.out.println("Monitor de mensajes interrumpido - Fertirrigación");
             }
@@ -167,13 +158,42 @@ public class HiloReceptorFertirrigacion extends Thread {
                     
                     System.out.println("Tiempo de fertirrigación enviado: 10 segundos");
                     
-                    // Esperar confirmación del cliente
-                    String respuesta = br.readLine();
+                    // NUEVO: Esperar respuesta o PING del cliente
+                    String respuesta = null;
+                    while (respuesta == null && ejecutando) {
+                        // Leer con timeout
+                        if (br.ready() || cliente.getSoTimeout() > 0) {
+                            respuesta = br.readLine();
+                            
+                            // Verificar si el cliente se desconectó
+                            if (respuesta == null) {
+                                System.out.println("Cliente fertirrigación envió null (desconectado)");
+                                manejarDesconexion();
+                                break;
+                            }
+                            
+                            // Procesar PING del cliente
+                            if (respuesta.equals("PING")) {
+                                
+                                out.println("PONG");
+                                out.flush();
+                                
+                                if (out.checkError()) {
+                                    System.out.println("Error al enviar PONG");
+                                    manejarDesconexion();
+                                    break;
+                                }
+                                
+                                respuesta = null; // Seguir esperando FERTI_OK
+                                continue;
+                            }
+                            
+                            // Respuesta real (FERTI_OK o error)
+                            break;
+                        }
+                    }
                     
-                    // Verificar si el cliente se desconectó
-                    if (respuesta == null) {
-                        System.out.println("Cliente fertirrigación envió null (desconectado)");
-                        manejarDesconexion();
+                    if (!ejecutando || respuesta == null) {
                         break;
                     }
                     

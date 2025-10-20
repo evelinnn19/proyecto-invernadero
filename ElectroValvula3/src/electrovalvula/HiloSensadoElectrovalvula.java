@@ -16,6 +16,7 @@ public class HiloSensadoElectrovalvula extends Thread {
     private PrintWriter haciaServer;
     private BufferedReader br;
     private Thread hiloMonitorConexion;
+    private Thread hiloHeartbeat; // 🆕
     
     public HiloSensadoElectrovalvula(Socket che, PrintWriter dos) {
         prendido = Boolean.TRUE;
@@ -35,10 +36,42 @@ public class HiloSensadoElectrovalvula extends Thread {
         if (hiloMonitorConexion != null) {
             hiloMonitorConexion.interrupt();
         }
+        if (hiloHeartbeat != null) {
+            hiloHeartbeat.interrupt();
+        }
     }
     
     public void encender() {
         prendido = Boolean.TRUE;
+    }
+    
+    // 🆕 Hilo que envía PING cada 10 segundos
+    private void iniciarHeartbeat() {
+        hiloHeartbeat = new Thread(() -> {
+            try {
+                while (prendido && !Thread.currentThread().isInterrupted()) {
+                    Thread.sleep(10000); // Cada 10 segundos
+                    
+                    if (prendido && !verificarEstadoSocket()) {
+                        haciaServer.println("PING");
+                        haciaServer.flush();
+                        
+                        if (haciaServer.checkError()) {
+                            System.out.println("Error al enviar PING. Servidor caído.");
+                            manejarDesconexion();
+                            break;
+                        }
+                        
+                        System.out.println("?Heartbeat enviado al servidor");
+                    }
+                }
+            } catch (InterruptedException e) {
+                System.out.println("Heartbeat interrumpido.");
+            }
+        });
+        
+        hiloHeartbeat.setDaemon(true);
+        hiloHeartbeat.start();
     }
     
     // Hilo monitor que verifica periódicamente el estado de la conexión
@@ -53,9 +86,6 @@ public class HiloSensadoElectrovalvula extends Thread {
                         break;
                     }
                     
-                    // Enviar heartbeat al servidor para mantener conexión activa
-                    enviarHeartbeat();
-                    
                     Thread.sleep(2000);
                 }
             } catch (InterruptedException e) {
@@ -65,21 +95,6 @@ public class HiloSensadoElectrovalvula extends Thread {
         
         hiloMonitorConexion.setDaemon(true);
         hiloMonitorConexion.start();
-    }
-    
-    // Envía un ping al servidor para verificar que sigue activo
-    private void enviarHeartbeat() {
-        try {
-            haciaServer.println("PING");
-            haciaServer.flush();
-            
-            if (haciaServer.checkError()) {
-                System.out.println("Error al enviar heartbeat. Servidor caído.");
-                manejarDesconexion();
-            }
-        } catch (Exception e) {
-            System.out.println("Excepción en heartbeat: " + e.getMessage());
-        }
     }
     
     // Verifica múltiples condiciones del socket
@@ -111,10 +126,12 @@ public class HiloSensadoElectrovalvula extends Thread {
     @Override
     public void run() {
         try {
+            // 🆕 Iniciar heartbeat
+            iniciarHeartbeat();
             // Iniciar el monitor de conexión en paralelo
             iniciarMonitorConexion();
             
-            System.out.println("Electroválvula lista para recibir comandos.");
+            System.out.println("Electroválvula lista para recibir comandos (con heartbeat).");
             
             while (prendido) {
                 // Verificar conexión antes de intentar leer
@@ -134,8 +151,9 @@ public class HiloSensadoElectrovalvula extends Thread {
                     break;
                 }
                 
-                // Ignorar los PONG del servidor (respuesta a nuestros PING)
+                // 🆕 Ignorar los PONG del servidor (respuesta a nuestros PING)
                 if (orden.equals("PONG")) {
+                    System.out.println("PONG recibido del servidor");
                     continue;
                 }
                 
@@ -165,7 +183,7 @@ public class HiloSensadoElectrovalvula extends Thread {
         
         if (orden.equalsIgnoreCase("ON")) {
             estadoValvula = true;
-            System.out.println("ElectroValvula 3 ABIERTA (Riego Parcela)");
+            System.out.println("Electroválvula ABIERTA (Riego Parcela activado)");
             
             // Confirmar al servidor
             haciaServer.println("ACK_ON");
@@ -173,7 +191,7 @@ public class HiloSensadoElectrovalvula extends Thread {
             
         } else if (orden.equalsIgnoreCase("OFF")) {
             estadoValvula = false;
-            System.out.println("ElectroValvula 3 CERRADA (Riego Parcela)");
+            System.out.println("Electroválvula CERRADA (Riego Parcela detenido)");
             
             // Confirmar al servidor
             haciaServer.println("ACK_OFF");
@@ -185,6 +203,12 @@ public class HiloSensadoElectrovalvula extends Thread {
             haciaServer.println("STATUS:" + estado);
             haciaServer.flush();
             System.out.println("Estado enviado: " + estado);
+            
+        } else if (orden.equals("PING")) {
+            // El servidor también puede enviarnos PING
+            haciaServer.println("PONG");
+            haciaServer.flush();
+            System.out.println("PONG enviado al servidor");
             
         } else {
             System.out.println("Comando desconocido: " + orden);
