@@ -1,8 +1,8 @@
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ControlRespuesta.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IServicioExclusionMutua.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\DetectorFallo.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServerExclusionMutuaRMI.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IDetectorFalla.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\AveriguarEstado.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServidorExclusionMutua.java
-D:\Descargas\proyecto-invernadero-ExclusionMutua2\proyecto-invernadero-ExclusionMutua2\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IClienteEM.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IClienteEM.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\DetectorFallo.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IServicioExclusionMutua.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\AveriguarEstado.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ControlRespuesta.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServidorExclusionMutua.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\servidorexclusionmutua\ServerExclusionMutuaRMI.java
+C:\Users\Evelin Suarez\OneDrive\Desktop\proyecto-invernadero\ServidorExclusionMutua\src\main\java\com\sistdist\interfaces\IDetectorFalla.java
