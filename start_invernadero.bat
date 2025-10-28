@@ -11,52 +11,67 @@ echo      Iniciando todos los proyectos...
 echo ============================================
 echo.
 
-REM === CONTROLADOR CENTRAL (PRINCIPAL Y BACKUP) ===
-echo  Iniciando Controlador Central (principal)...
-cd ControladorCentral
-if exist "target" (
-    for %%f in (target\*.jar) do start "Controlador Central Principal" cmd /k "java -jar %%f"
-) else (
-    start "Controlador Central Principal" cmd /k "java -jar dist\ControladorCentral.jar"
-)
-cd ..
-
-timeout /t 3 /nobreak >nul
-
-echo  Iniciando Controlador Central (backup)...
-cd ControladorCentral
-if exist "target" (
-    for %%f in (target\*.jar) do start "Controlador Central Backup" cmd /k "java -jar %%f backup"
-) else (
-    start "Controlador Central Backup" cmd /k "java -jar dist\ControladorCentral.jar backup"
-)
-cd ..
-
-timeout /t 3 /nobreak >nul
 
 
-
-REM === SERVIDOR DE EXCLUSION MUTUA (MAVEN) ===
-echo  Iniciando Servidor de Exclusion Mutua...
+REM === SERVIDOR DE EXCLUSION MUTUA ===
+echo [1/4] Iniciando Servidor de Exclusion Mutua...
 cd ServidorExclusionMutua
+
+REM Determina la ruta del JAR a ejecutar una sola vez
+set "JAR_PATH=dist\ServidorExclusionMutua.jar"
 if exist "target" (
-    for %%f in (target\*.jar) do start "Servidor Exclusion Mutua " cmd /k "java -jar %%f"
-) else (
-    start "Servidor Exclusion Mutua" cmd /k "java -jar dist\ServidorExclusionMutua.jar"
+    REM Si existe 'target', busca el primer JAR allí
+    for %%f in (target\*.jar) do (
+        set "JAR_PATH=%%f"
+        goto :start_loop
+    )
 )
+
+:start_loop
+REM Bucle FOR que itera 5 veces (de 1 a 5)
+for /L %%i in (1,1,5) do (
+    start "Servidor Exclusion Mutua %%i" cmd /k "color 0E && title Servidor Exclusion Mutua - Proceso %%i && java -jar "%JAR_PATH%" %%i"
+)
+
 cd ..
 timeout /t 3 /nobreak >nul
 
-REM === SERVIDOR DE EXCLUSION MUTUA (MAVEN) ===
-echo  Iniciando Servidor de Exclusion Mutua backup...
-cd ServidorExclusionMutua
+
+
+
+
+REM === NODOS DEL ANILLO (compiten por puerto 20000) ===
+echo [2/4] Iniciando Anillo de Nodos...
+echo       Solo el lider abrira el puerto 20000
+echo.
+cd ControladorCentral
+
 if exist "target" (
-    for %%f in (target\*.jar) do start "Servidor Exclusion Mutua respaldo" cmd /k "java -jar %%f"
+    REM Buscar el primer JAR y usarlo
+    for %%f in (target\*.jar) do (
+        start "Nodo 3 [ID MAYOR]" cmd /k "color 0B && title Nodo 3 && java -cp %%f ControladorCentral.Main 3 5003 5001"
+        timeout /t 1 /nobreak >nul
+        start "Nodo 2 [BACKUP]" cmd /k "color 0B && title Nodo 2 && java -cp %%f ControladorCentral.Main 2 5002 5003"
+        timeout /t 1 /nobreak >nul
+        start "Nodo 1 [BACKUP]" cmd /k "color 0B && title Nodo 1 && java -cp %%f ControladorCentral.Main 1 5001 5002"
+        goto :nodos_iniciados
+    )
 ) else (
-    start "Servidor Exclusion Mutua" cmd /k "java -jar dist\ServidorExclusionMutua.jar respaldo"
+    start "Nodo 3 [ID MAYOR]" cmd /k "color 0B && title Nodo 3 && java -cp dist\ControladorCentral.jar ControladorCentral.Main 3 5003 5001"
+    timeout /t 1 /nobreak >nul
+    start "Nodo 2 [BACKUP]" cmd /k "color 0B && title Nodo 2 && java -cp dist\ControladorCentral.jar ControladorCentral.Main 2 5002 5003"
+    timeout /t 1 /nobreak >nul
+    start "Nodo 1 [BACKUP]" cmd /k "color 0B && title Nodo 1 && java -cp dist\ControladorCentral.jar ControladorCentral.Main 1 5001 5002"
 )
+:nodos_iniciados
 cd ..
-timeout /t 3 /nobreak >nul
+
+echo [3/4] Esperando eleccion del lider...
+timeout /t 5 /nobreak >nul
+
+REM === CLIENTES (no saben del anillo) ===
+echo [4/4] Iniciando Clientes...
+
 
 
 REM === SISTEMA DE FERTIRRIGACION ===
@@ -114,7 +129,7 @@ echo  Iniciando Electrovalvulas...
 for /L %%i in (1,1,7) do (
     if exist "ElectroValvula%%i\dist\ElectroValvula%%i.jar" (
         start "Electrovalvula %%i" cmd /k "cd ElectroValvula%%i && java -jar dist\ElectroValvula%%i.jar"
-    )
+    ) else (start "Electrovalvula" cmd /k "cd ElectroValvula && java -jar dist\ElectroValvula.jar")
 )
 timeout /t 2 /nobreak >nul
 
@@ -125,3 +140,40 @@ echo  Todos los componentes del invernadero fueron iniciados.
 echo  (Cada ventana corresponde a un módulo independiente.)
 echo ============================================
 pause
+
+
+
+echo.
+echo ============================================
+echo    SISTEMA INICIADO
+echo ============================================
+echo.
+echo Estado:
+echo   - Anillo formado: 3 nodos (puertos 5001, 5002, 5003)
+echo   - Lider actual: Nodo 3 (puerto clientes: 20000)
+echo   - Clientes conectandose a: localhost:20000
+echo.
+echo PRUEBA DE TOLERANCIA A FALLOS:
+echo   1. Los clientes estan en puerto 20000
+echo   2. Cierra la ventana "Nodo 3" (lider actual)
+echo   3. Nodo 2 detectara la falla (10 seg)
+echo   4. Nodo 2 ganara eleccion y abrira puerto 20000
+echo   5. Clientes se reconectaran automaticamente
+echo.
+echo Presiona cualquier tecla para detener todo...
+pause >nul
+
+REM === DETENER TODO ===
+echo.
+echo Deteniendo sistema...
+taskkill /FI "WindowTitle eq Nodo*" /F >nul 2>&1
+taskkill /FI "WindowTitle eq Servidor*" /F >nul 2>&1
+taskkill /FI "WindowTitle eq Sensor*" /F >nul 2>&1
+echo Sistema detenido.
+timeout /t 2 /nobreak >nul
+
+
+
+
+
+

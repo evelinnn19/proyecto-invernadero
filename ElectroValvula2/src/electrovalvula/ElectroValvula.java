@@ -41,7 +41,7 @@ public class ElectroValvula {
                 System.out.println("Socket creado: " + cliente);
 
                 PrintWriter outToServer = new PrintWriter(cliente.getOutputStream(), true);
-                outToServer.println("electroValvula3");
+                outToServer.println("electroValvula2");
                 outToServer.flush();
 
                 // Verificar que el mensaje se envió correctamente

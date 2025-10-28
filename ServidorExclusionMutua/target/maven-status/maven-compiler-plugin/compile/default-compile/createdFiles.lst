@@ -3,6 +3,7 @@ com\sistdist\servidorexclusionmutua\ControlRespuesta.class
 com\sistdist\interfaces\IClienteEM.class
 com\sistdist\servidorexclusionmutua\AveriguarEstado.class
 com\sistdist\servidorexclusionmutua\ServerExclusionMutuaRMI.class
+com\sistdist\servidorexclusionmutua\MonitorMaestro.class
 com\sistdist\servidorexclusionmutua\ServidorExclusionMutua.class
 com\sistdist\interfaces\IServicioExclusionMutua.class
 com\sistdist\interfaces\IDetectorFalla.class

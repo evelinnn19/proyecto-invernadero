@@ -15,15 +15,27 @@ echo.
 REM === SERVIDOR DE EXCLUSION MUTUA ===
 echo [1/4] Iniciando Servidor de Exclusion Mutua...
 cd ServidorExclusionMutua
+
+REM Determina la ruta del JAR a ejecutar una sola vez
+set "JAR_PATH=dist\ServidorExclusionMutua.jar"
 if exist "target" (
+    REM Si existe 'target', busca el primer JAR allí
     for %%f in (target\*.jar) do (
-        start "Servidor Exclusion Mutua" cmd /k "color 0E && title Servidor Exclusion Mutua && java -jar %%f"
+        set "JAR_PATH=%%f"
+        goto :start_loop
     )
-) else (
-    start "Servidor Exclusion Mutua" cmd /k "color 0E && title Servidor Exclusion Mutua && java -jar dist\ServidorExclusionMutua.jar"
 )
+
+:start_loop
+REM Bucle FOR que itera 5 veces (de 1 a 5)
+for /L %%i in (1,1,5) do (
+    start "Servidor Exclusion Mutua %%i" cmd /k "color 0E && title Servidor Exclusion Mutua - Proceso %%i && java -jar "%JAR_PATH%" %%i"
+)
+
 cd ..
 timeout /t 3 /nobreak >nul
+
+
 
 REM === NODOS DEL ANILLO (compiten por puerto 20000) ===
 echo [2/4] Iniciando Anillo de Nodos...

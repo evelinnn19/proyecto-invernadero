@@ -85,4 +85,11 @@ public class DetectorFallo extends UnicastRemoteObject implements IDetectorFalla
     public boolean maestroCaido() {
         return "CAÍDO".equals(estado);
     }
+    
+       public void resetearFallos() {
+        contadorFallos = 0;
+        estado = "no sospechoso";
+        llegoMensaje = false;
+        System.out.println("✓ Contador de fallos reseteado");
+    }
 }

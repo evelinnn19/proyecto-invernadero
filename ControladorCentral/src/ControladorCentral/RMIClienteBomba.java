@@ -20,8 +20,7 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
     private final Semaphore sem = new Semaphore(0); // inicio 0: bloqueado
     
     // URLs de los servidores
-    private final String urlMaestro = "rmi://localhost:10000/servidorCentralEM";
-    private final String urlRespaldo = "rmi://localhost:10001/servidorCentralEM";
+    private final String urlServer = "rmi://localhost:10000/servidorCentralEM";
     private boolean usandoMaestro = true;
     
     private static final int MAX_REINTENTOS = 3;
@@ -37,7 +36,7 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
     private void conectarConFailover() throws RemoteException, MalformedURLException, NotBoundException {
         try {
             System.out.println("🔄 Intentando conectar con servidor maestro...");
-            servicio = (IServicioExclusionMutua) Naming.lookup(urlMaestro);
+            servicio = (IServicioExclusionMutua) Naming.lookup(urlServer);
             usandoMaestro = true;
             System.out.println("✅ Conectado al servidor MAESTRO (puerto 10000)");
             
@@ -45,7 +44,7 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
             System.out.println("⚠️ Maestro no disponible, intentando con respaldo...");
             
             try {
-                servicio = (IServicioExclusionMutua) Naming.lookup(urlRespaldo);
+                servicio = (IServicioExclusionMutua) Naming.lookup(urlServer);
                 usandoMaestro = false;
                 System.out.println("✅ Conectado al servidor RESPALDO (puerto 10001)");
                 
@@ -61,15 +60,13 @@ public class RMIClienteBomba extends UnicastRemoteObject implements IClienteEM {
      */
     private boolean intentarFailover() {
         try {
-            String urlAlternativa = usandoMaestro ? urlRespaldo : urlMaestro;
-            String nombreServidor = usandoMaestro ? "RESPALDO" : "MAESTRO";
+           
+            System.out.println("🔄 Intentando failover a servidor ");
             
-            System.out.println("🔄 Intentando failover a servidor " + nombreServidor + "...");
-            
-            servicio = (IServicioExclusionMutua) Naming.lookup(urlAlternativa);
+            servicio = (IServicioExclusionMutua) Naming.lookup(urlServer);
             usandoMaestro = !usandoMaestro;
             
-            System.out.println("✅ Failover exitoso - Conectado a " + nombreServidor);
+         
             return true;
             
         } catch (Exception e) {
